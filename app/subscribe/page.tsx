@@ -17,7 +17,7 @@ export default function SubscribePage() {
         <div className="max-w-6xl mx-auto">
           <header className="mb-12 text-center">
             <h1 className="text-4xl md:text-5xl font-bold font-serif text-black dark:text-white mb-6">
-              Subscribe to The Herald Times
+              Subscribe to SylphCorps Media
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 leading-relaxed">
               Stay informed with trusted journalism and in-depth analysis
@@ -148,7 +148,7 @@ export default function SubscribePage() {
           {/* Benefits */}
           <div className="mt-12">
             <h2 className="text-2xl font-bold font-serif text-black dark:text-white mb-8 text-center">
-              Why subscribe to The Herald Times?
+              Why subscribe to SylphCorps Media?
             </h2>
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center">
@@ -164,9 +164,9 @@ export default function SubscribePage() {
                 </p>
               </div>
               <div className="text-center">
-                <h3 className="text-lg font-semibold text-black dark:text-white mb-3">Trusted Since 1851</h3>
+                <h3 className="text-lg font-semibold text-black dark:text-white mb-3">Trusted Digital Innovation</h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Over 170 years of independent journalism you can trust for accurate, unbiased reporting.
+                  Cutting-edge digital journalism with innovative storytelling and comprehensive coverage you can trust.
                 </p>
               </div>
             </div>

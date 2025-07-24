@@ -19,7 +19,7 @@ export default function LoginPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-700">
             <header className="mb-8 text-center">
               <h1 className="text-3xl font-bold font-serif text-black dark:text-white mb-2">Welcome Back</h1>
-              <p className="text-gray-600 dark:text-gray-400">Sign in to your Herald Times account</p>
+              <p className="text-gray-600 dark:text-gray-400">Sign in to your SylphCorps Media account</p>
             </header>
 
             <form className="space-y-6">
@@ -92,7 +92,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-8 text-center">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">New to The Herald Times?</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">New to SylphCorps Media?</p>
             <Link href="/subscribe">
               <Button variant="outline" className="border-gray-300 dark:border-gray-600 bg-transparent">
                 Start Your Subscription

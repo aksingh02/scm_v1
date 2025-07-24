@@ -110,9 +110,9 @@ export default function ContactPage() {
                   <Mail className="h-6 w-6 text-gray-600 dark:text-gray-400 mt-1" />
                   <div>
                     <h3 className="font-semibold text-black dark:text-white mb-2">Email</h3>
-                    <p className="text-gray-600 dark:text-gray-400">newsroom@heraldtimes.com</p>
-                    <p className="text-gray-600 dark:text-gray-400">tips@heraldtimes.com</p>
-                    <p className="text-gray-600 dark:text-gray-400">support@heraldtimes.com</p>
+                    <p className="text-gray-600 dark:text-gray-400">newsroom@sylphcorps.media</p>
+                    <p className="text-gray-600 dark:text-gray-400">tips@sylphcorps.media</p>
+                    <p className="text-gray-600 dark:text-gray-400">support@sylphcorps.media</p>
                   </div>
                 </div>
 
@@ -120,9 +120,9 @@ export default function ContactPage() {
                   <Phone className="h-6 w-6 text-gray-600 dark:text-gray-400 mt-1" />
                   <div>
                     <h3 className="font-semibold text-black dark:text-white mb-2">Phone</h3>
-                    <p className="text-gray-600 dark:text-gray-400">Newsroom: (555) 123-4567</p>
-                    <p className="text-gray-600 dark:text-gray-400">Subscriptions: (555) 123-4568</p>
-                    <p className="text-gray-600 dark:text-gray-400">Advertising: (555) 123-4569</p>
+                    <p className="text-gray-600 dark:text-gray-400">Newsroom: +91 11 4567-8901</p>
+                    <p className="text-gray-600 dark:text-gray-400">Subscriptions: +91 11 4567-8902</p>
+                    <p className="text-gray-600 dark:text-gray-400">Advertising: +91 11 4567-8903</p>
                   </div>
                 </div>
 
@@ -131,13 +131,13 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-black dark:text-white mb-2">Address</h3>
                     <p className="text-gray-600 dark:text-gray-400">
-                      The Herald Times
+                      SylphCorps Media
                       <br />
-                      123 News Plaza
+                      Block A, Connaught Place
                       <br />
-                      New York, NY 10001
+                      New Delhi, Delhi 110001
                       <br />
-                      United States
+                      India
                     </p>
                   </div>
                 </div>
@@ -146,8 +146,8 @@ export default function ContactPage() {
                   <Clock className="h-6 w-6 text-gray-600 dark:text-gray-400 mt-1" />
                   <div>
                     <h3 className="font-semibold text-black dark:text-white mb-2">Business Hours</h3>
-                    <p className="text-gray-600 dark:text-gray-400">Monday - Friday: 9:00 AM - 6:00 PM EST</p>
-                    <p className="text-gray-600 dark:text-gray-400">Saturday: 10:00 AM - 4:00 PM EST</p>
+                    <p className="text-gray-600 dark:text-gray-400">Monday - Friday: 9:00 AM - 6:00 PM IST</p>
+                    <p className="text-gray-600 dark:text-gray-400">Saturday: 10:00 AM - 4:00 PM IST</p>
                     <p className="text-gray-600 dark:text-gray-400">Sunday: Closed</p>
                     <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
                       *Newsroom operates 24/7 for breaking news
@@ -159,8 +159,8 @@ export default function ContactPage() {
               <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <h3 className="font-semibold text-black dark:text-white mb-3">News Tips</h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Have a story tip or breaking news? Contact our newsroom directly at tips@heraldtimes.com or call our
-                  24/7 tip line at (555) 123-NEWS. We protect the confidentiality of our sources.
+                  Have a story tip or breaking news? Contact our newsroom directly at tips@sylphcorps.media or call our
+                  24/7 tip line at +91 11 4567-NEWS. We protect the confidentiality of our sources.
                 </p>
               </div>
             </div>

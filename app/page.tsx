@@ -1,46 +1,21 @@
-"use client"
-
-import { useState, useCallback } from "react"
 import { Separator } from "@/components/ui/separator"
 import { Header } from "@/components/header"
 import { FeaturedArticle } from "@/components/featured-article"
 import { RecentArticles } from "@/components/recent-articles"
 import { Newsletter } from "@/components/newsletter"
 import { Footer } from "@/components/footer"
-import { PullToRefresh } from "@/components/pull-to-refresh"
 import { getAllCategories, getFeaturedArticle, getRecentArticles, getTimeAgo } from "@/lib/data"
-import { useToast } from "@/hooks/use-toast"
+import { Suspense } from "react"
+import { FeaturedSkeleton } from "@/components/loading/featured-skeleton"
+import { ArticlesGridSkeleton } from "@/components/loading/articles-grid-skeleton"
 
-export default function NewsHomepage() {
-  const { toast } = useToast()
-  const [refreshKey, setRefreshKey] = useState(0)
-
-  const categories = getAllCategories()
-  const navigationItems = categories.map((category) => category.name)
-  const featuredArticleData = getFeaturedArticle()
-  const recentArticlesData = getRecentArticles(6)
-
-  const handleRefresh = useCallback(async () => {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    // Force re-render by updating key
-    setRefreshKey((prev) => prev + 1)
-
-    toast({
-      title: "Content refreshed",
-      description: "Latest news has been updated",
-      duration: 2000,
-    })
-  }, [toast])
+async function FeaturedSection() {
+  const featuredArticleData = await getFeaturedArticle()
 
   if (!featuredArticleData) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 text-black dark:text-white">No featured article found</div>
-    )
+    return <div className="text-center py-8">No featured article available</div>
   }
 
-  // Transform featured article data to match component interface
   const featuredArticle = {
     title: featuredArticleData.title,
     summary: featuredArticleData.summary,
@@ -52,7 +27,12 @@ export default function NewsHomepage() {
     slug: featuredArticleData.slug,
   }
 
-  // Transform recent articles data
+  return <FeaturedArticle article={featuredArticle} />
+}
+
+async function RecentSection() {
+  const recentArticlesData = await getRecentArticles(6)
+
   const recentArticles = recentArticlesData.map((article) => ({
     title: article.title,
     summary: article.summary,
@@ -64,23 +44,37 @@ export default function NewsHomepage() {
     author: article.author,
   }))
 
+  return <RecentArticles articles={recentArticles} />
+}
+
+async function HeaderSection() {
+  const categories = await getAllCategories()
+  const navigationItems = categories.map((category) => category.name)
+  return <Header navigationItems={navigationItems} />
+}
+
+export default async function NewsHomepage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
-      <Header navigationItems={navigationItems} />
+      <Suspense fallback={<div className="h-20 bg-white dark:bg-gray-900" />}>
+        <HeaderSection />
+      </Suspense>
 
-      <PullToRefresh onRefresh={handleRefresh}>
-        <main className="container mx-auto px-4 py-8" key={refreshKey}>
-          <FeaturedArticle article={featuredArticle} />
+      <main className="container mx-auto px-4 py-8">
+        <Suspense fallback={<FeaturedSkeleton />}>
+          <FeaturedSection />
+        </Suspense>
 
-          <Separator className="my-12 border-gray-200 dark:border-gray-800" />
+        <Separator className="my-12 border-gray-200 dark:border-gray-800" />
 
-          <RecentArticles articles={recentArticles} />
+        <Suspense fallback={<ArticlesGridSkeleton />}>
+          <RecentSection />
+        </Suspense>
 
-          <Newsletter />
-        </main>
+        <Newsletter />
+      </main>
 
-        <Footer />
-      </PullToRefresh>
+      <Footer />
     </div>
   )
 }

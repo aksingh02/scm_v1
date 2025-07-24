@@ -11,7 +11,7 @@ import { Footer } from "@/components/footer"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
-import { getAllCategories, searchArticles, type Article } from "@/lib/data"
+import { getAllCategories, searchArticlesData, type Article, getTimeAgo } from "@/lib/data"
 
 export default function SearchPage() {
   const searchParams = useSearchParams()
@@ -20,29 +20,35 @@ export default function SearchPage() {
   const [query, setQuery] = useState(initialQuery)
   const [results, setResults] = useState<Article[]>([])
   const [isSearching, setIsSearching] = useState(false)
-
-  const categories = getAllCategories()
-  const navigationItems = categories.map((category) => category.name)
+  const [categories, setCategories] = useState<string[]>([])
 
   useEffect(() => {
+    // Load categories
+    getAllCategories().then((cats) => {
+      setCategories(cats.map((cat) => cat.name))
+    })
+
     if (initialQuery) {
       performSearch(initialQuery)
     }
   }, [initialQuery])
 
-  const performSearch = (searchQuery: string) => {
+  const performSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) {
       setResults([])
       return
     }
 
     setIsSearching(true)
-    // Simulate search delay
-    setTimeout(() => {
-      const searchResults = searchArticles(searchQuery)
+    try {
+      const searchResults = await searchArticlesData(searchQuery)
       setResults(searchResults)
+    } catch (error) {
+      console.error("Search failed:", error)
+      setResults([])
+    } finally {
       setIsSearching(false)
-    }, 300)
+    }
   }
 
   const handleSearch = (e: React.FormEvent) => {
@@ -50,9 +56,21 @@ export default function SearchPage() {
     performSearch(query)
   }
 
+  // Transform results for RecentArticles component
+  const transformedResults = results.map((article) => ({
+    title: article.title,
+    summary: article.summary,
+    image: article.image,
+    category: article.category,
+    readTime: article.readTime,
+    publishedAt: getTimeAgo(article.publishedAt),
+    slug: article.slug,
+    author: article.author,
+  }))
+
   return (
     <div className="min-h-screen bg-white">
-      <Header navigationItems={navigationItems} />
+      <Header navigationItems={categories} />
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto mb-8">
@@ -88,7 +106,7 @@ export default function SearchPage() {
           </div>
         )}
 
-        {results.length > 0 && !isSearching && <RecentArticles articles={results} />}
+        {results.length > 0 && !isSearching && <RecentArticles articles={transformedResults} />}
 
         {query && results.length === 0 && !isSearching && (
           <div className="text-center py-12">

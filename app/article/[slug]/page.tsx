@@ -8,21 +8,22 @@ import Image from "next/image"
 import Link from "next/link"
 
 interface ArticlePageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
-export default function ArticlePage({ params }: ArticlePageProps) {
-  const categories = getAllCategories()
+export default async function ArticlePage({ params }: ArticlePageProps) {
+  const resolvedParams = await params
+  const categories = await getAllCategories()
   const navigationItems = categories.map((category) => category.name)
-  const article = getArticleBySlug(params.slug)
+  const article = await getArticleBySlug(resolvedParams.slug)
 
   if (!article) {
     notFound()
   }
 
-  const relatedArticles = getRelatedArticles(article, 3)
+  const relatedArticles = await getRelatedArticles(article, 3)
 
   return (
     <div className="min-h-screen bg-white">
@@ -137,13 +138,4 @@ export default function ArticlePage({ params }: ArticlePageProps) {
       <Footer />
     </div>
   )
-}
-
-export async function generateStaticParams() {
-  const { getAllArticles } = await import("@/lib/data")
-  const articles = getAllArticles()
-
-  return articles.map((article) => ({
-    slug: article.slug,
-  }))
 }
