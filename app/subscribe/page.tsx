@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getAllCategories } from "@/lib/data"
 import { Check, Star } from "lucide-react"
+import { Suspense } from "react"
 
-export default function SubscribePage() {
-  const categories = getAllCategories()
+async function SubscribePageContent() {
+  const categories = await getAllCategories()
   const navigationItems = categories.map((category) => category.name)
 
   return (
@@ -176,5 +177,13 @@ export default function SubscribePage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function SubscribePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SubscribePageContent />
+    </Suspense>
   )
 }

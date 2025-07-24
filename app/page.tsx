@@ -1,4 +1,3 @@
-import { Suspense } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { FeaturedArticle } from "@/components/featured-article"
@@ -6,7 +5,7 @@ import { RecentArticles } from "@/components/recent-articles"
 import { Newsletter } from "@/components/newsletter"
 import { PullToRefresh } from "@/components/pull-to-refresh"
 import { getAllCategories, getFeaturedArticle, getRecentArticles } from "@/lib/data"
-import { PageSkeleton } from "@/components/loading/page-skeleton"
+import { Suspense } from "react"
 
 async function HomePageContent() {
   const [categories, featuredArticle, recentArticles] = await Promise.all([
@@ -17,17 +16,22 @@ async function HomePageContent() {
 
   const navigationItems = categories.map((category) => category.name)
 
+  const handleRefresh = async () => {
+    // Refresh logic would go here
+    window.location.reload()
+  }
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
       <Header navigationItems={navigationItems} />
 
-      <main>
-        <PullToRefresh>
+      <PullToRefresh onRefresh={handleRefresh}>
+        <main>
           {featuredArticle && <FeaturedArticle article={featuredArticle} />}
           <RecentArticles articles={recentArticles} />
           <Newsletter />
-        </PullToRefresh>
-      </main>
+        </main>
+      </PullToRefresh>
 
       <Footer />
     </div>
@@ -36,7 +40,7 @@ async function HomePageContent() {
 
 export default function HomePage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<div>Loading...</div>}>
       <HomePageContent />
     </Suspense>
   )

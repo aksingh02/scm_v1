@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { getAllCategories } from "@/lib/data"
 import { Mail, Phone, MapPin, Clock } from "lucide-react"
+import { Suspense } from "react"
 
-export default function ContactPage() {
-  const categories = getAllCategories()
+async function ContactPageContent() {
+  const categories = await getAllCategories()
   const navigationItems = categories.map((category) => category.name)
 
   return (
@@ -170,5 +171,13 @@ export default function ContactPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ContactPageContent />
+    </Suspense>
   )
 }

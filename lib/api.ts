@@ -1,4 +1,3 @@
-// API Response Types
 export interface ApiArticle {
   id: number
   title: string
@@ -18,8 +17,8 @@ export interface ApiArticle {
   published: boolean
 }
 
-export interface ApiResponse<T> {
-  content: T[]
+export interface ApiResponse {
+  content: ApiArticle[]
   pageable: {
     sort: {
       empty: boolean
@@ -49,20 +48,25 @@ export interface ApiResponse<T> {
 
 const API_BASE_URL = "http://localhost:8085/api"
 
-// Fetch articles with pagination and sorting
+// Fetch articles with pagination
 export async function fetchArticles(
   page = 0,
   size = 20,
   sortBy = "publishedAt",
   sortDir = "desc",
-): Promise<ApiResponse<ApiArticle>> {
+): Promise<ApiResponse> {
   try {
     const response = await fetch(
       `${API_BASE_URL}/articles/public?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
     )
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch articles: ${response.status} ${response.statusText}`)
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
 
     return await response.json()
@@ -75,10 +79,14 @@ export async function fetchArticles(
 // Fetch categories
 export async function fetchCategories(): Promise<string[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/articles/categories`)
+    const response = await fetch(`${API_BASE_URL}/articles/categories`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch categories: ${response.status} ${response.statusText}`)
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
 
     return await response.json()
@@ -88,12 +96,10 @@ export async function fetchCategories(): Promise<string[]> {
   }
 }
 
-// Fetch single article by slug
+// Fetch article by slug
 export async function fetchArticleBySlug(slug: string): Promise<ApiArticle | null> {
   try {
-    // First fetch all articles and find by slug
-    // In a real implementation, you'd want a dedicated endpoint for this
-    const response = await fetchArticles(0, 1000) // Get a large number to find the article
+    const response = await fetchArticles(0, 100) // Get more articles to find by slug
     const article = response.content.find((article) => article.slug === slug)
     return article || null
   } catch (error) {
@@ -103,18 +109,13 @@ export async function fetchArticleBySlug(slug: string): Promise<ApiArticle | nul
 }
 
 // Fetch articles by category
-export async function fetchArticlesByCategory(category: string, page = 0, size = 20): Promise<ApiResponse<ApiArticle>> {
+export async function fetchArticlesByCategory(category: string, page = 0, size = 20): Promise<ApiResponse> {
   try {
     // For now, fetch all articles and filter by category
-    // In a real implementation, you'd want a dedicated endpoint for this
+    // In a real implementation, the API should support category filtering
     const response = await fetchArticles(page, size)
-
-    // Filter articles by category (case-insensitive)
-    const filteredContent = response.content.filter(
-      (article) =>
-        article.tags.some((tag) => tag.toLowerCase() === category.toLowerCase()) ||
-        article.title.toLowerCase().includes(category.toLowerCase()) ||
-        article.description.toLowerCase().includes(category.toLowerCase()),
+    const filteredContent = response.content.filter((article) =>
+      article.tags.some((tag) => tag.toLowerCase() === category.toLowerCase()),
     )
 
     return {
@@ -132,16 +133,16 @@ export async function fetchArticlesByCategory(category: string, page = 0, size =
 // Search articles
 export async function searchArticles(query: string): Promise<ApiArticle[]> {
   try {
-    const response = await fetchArticles(0, 1000) // Get all articles for search
-    const lowercaseQuery = query.toLowerCase()
-
-    return response.content.filter(
+    const response = await fetchArticles(0, 100) // Get more articles for search
+    const filteredArticles = response.content.filter(
       (article) =>
-        article.title.toLowerCase().includes(lowercaseQuery) ||
-        article.description.toLowerCase().includes(lowercaseQuery) ||
-        article.content.toLowerCase().includes(lowercaseQuery) ||
-        article.tags.some((tag) => tag.toLowerCase().includes(lowercaseQuery)),
+        article.title.toLowerCase().includes(query.toLowerCase()) ||
+        article.description.toLowerCase().includes(query.toLowerCase()) ||
+        article.content.toLowerCase().includes(query.toLowerCase()) ||
+        article.tags.some((tag) => tag.toLowerCase().includes(query.toLowerCase())),
     )
+
+    return filteredArticles
   } catch (error) {
     console.error("Error searching articles:", error)
     return []

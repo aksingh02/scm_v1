@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { getAllCategories } from "@/lib/data"
 import { Users, Eye, Target, TrendingUp, Globe, Smartphone, Monitor, Newspaper } from "lucide-react"
+import { Suspense } from "react"
 
-export default function AdvertisePage() {
-  const categories = getAllCategories()
+async function AdvertisePageContent() {
+  const categories = await getAllCategories()
   const navigationItems = categories.map((category) => category.name)
 
   const adFormats = [
@@ -348,5 +349,13 @@ export default function AdvertisePage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function AdvertisePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AdvertisePageContent />
+    </Suspense>
   )
 }

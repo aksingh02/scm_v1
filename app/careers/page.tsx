@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { getAllCategories } from "@/lib/data"
 import { MapPin, Clock, Users, Award, Coffee, Heart } from "lucide-react"
+import { Suspense } from "react"
 
-export default function CareersPage() {
-  const categories = getAllCategories()
+async function CareersPageContent() {
+  const categories = await getAllCategories()
   const navigationItems = categories.map((category) => category.name)
 
   const jobOpenings = [
@@ -210,5 +211,13 @@ export default function CareersPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function CareersPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CareersPageContent />
+    </Suspense>
   )
 }

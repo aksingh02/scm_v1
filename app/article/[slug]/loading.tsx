@@ -1,11 +1,10 @@
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Separator } from "@/components/ui/separator"
-import { getAllCategories } from "@/lib/data"
 
 export default function ArticleLoading() {
-  const categories = getAllCategories()
-  const navigationItems = categories.map((category) => category.name)
+  // Use fallback navigation items for loading state
+  const navigationItems = ["World", "Politics", "Technology", "Business", "Science", "Health"]
 
   return (
     <div className="min-h-screen bg-white">
