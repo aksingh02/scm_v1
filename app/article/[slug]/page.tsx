@@ -1,11 +1,14 @@
 import { Header } from "@/components/header"
-import { Newsletter } from "@/components/newsletter"
 import { Footer } from "@/components/footer"
-import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Card, CardContent } from "@/components/ui/card"
 import { getAllCategories, getArticleBySlug, getRelatedArticles, formatDate, getTimeAgo } from "@/lib/data"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
+import { Suspense } from "react"
+import ArticleLoading from "./loading"
 
 interface ArticlePageProps {
   params: Promise<{
@@ -13,129 +16,142 @@ interface ArticlePageProps {
   }>
 }
 
-export default async function ArticlePage({ params }: ArticlePageProps) {
-  const resolvedParams = await params
-  const categories = await getAllCategories()
-  const navigationItems = categories.map((category) => category.name)
-  const article = await getArticleBySlug(resolvedParams.slug)
+async function ArticlePageContent({ params }: ArticlePageProps) {
+  const { slug } = await params
+
+  const [categories, article] = await Promise.all([getAllCategories(), getArticleBySlug(slug)])
 
   if (!article) {
     notFound()
   }
 
-  const relatedArticles = await getRelatedArticles(article, 3)
+  const [relatedArticles] = await Promise.all([getRelatedArticles(article, 3)])
+
+  const navigationItems = categories.map((category) => category.name)
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
       <Header navigationItems={navigationItems} />
 
-      <main className="container mx-auto px-4 py-8">
-        <article className="max-w-4xl mx-auto">
-          {/* Article Header */}
+      <article className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
           <header className="mb-8">
-            <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-              <Link
-                href={`/${article.category.toLowerCase()}`}
-                className="bg-black text-white px-2 py-1 text-xs font-medium hover:bg-gray-800"
-              >
-                {article.category}
-              </Link>
-              <span>•</span>
-              <span>{getTimeAgo(article.publishedAt)}</span>
-              <span>•</span>
-              <span>{article.readTime}</span>
+            <div className="flex items-center gap-2 mb-4">
+              <Badge variant="secondary">{article.category}</Badge>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{getTimeAgo(article.publishedAt)}</span>
             </div>
 
-            <h1 className="text-4xl md:text-5xl font-bold font-serif text-black leading-tight mb-6">{article.title}</h1>
+            <h1 className="text-4xl md:text-5xl font-bold font-serif text-black dark:text-white mb-6 leading-tight">
+              {article.title}
+            </h1>
 
-            <p className="text-xl text-gray-700 leading-relaxed mb-6">{article.summary}</p>
+            <p className="text-xl text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">{article.summary}</p>
 
-            <div className="flex items-center space-x-4 mb-8">
-              <Image
-                src={article.author.avatar || "/placeholder.svg"}
-                alt={article.author.name}
-                width={50}
-                height={50}
-                className="rounded-full"
-              />
+            <div className="flex items-center gap-4 mb-8">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={article.author.avatar || "/placeholder.svg"} alt={article.author.name} />
+                <AvatarFallback>{article.author.name.charAt(0)}</AvatarFallback>
+              </Avatar>
               <div>
-                <p className="font-semibold text-black">{article.author.name}</p>
-                <p className="text-sm text-gray-600">{article.author.bio}</p>
-                <p className="text-sm text-gray-500">{formatDate(article.publishedAt)}</p>
+                <p className="font-medium text-black dark:text-white">{article.author.name}</p>
+                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                  <span>{formatDate(article.publishedAt)}</span>
+                  <span>•</span>
+                  <span>{article.readTime}</span>
+                </div>
               </div>
             </div>
           </header>
 
-          {/* Article Image */}
-          <div className="mb-8">
+          <div className="aspect-video relative mb-8 rounded-lg overflow-hidden">
             <Image
               src={article.image || "/placeholder.svg"}
               alt={article.title}
-              width={800}
-              height={500}
-              className="w-full h-auto rounded-lg shadow-lg"
+              fill
+              className="object-cover"
+              priority
             />
           </div>
 
-          {/* Article Content */}
-          <div className="prose prose-lg max-w-none mb-8">
-            {article.content.split("\n\n").map((paragraph, index) => (
-              <p key={index} className="mb-6 text-gray-800 leading-relaxed">
+          <div className="prose prose-lg max-w-none dark:prose-invert mb-12">
+            {article.content.split("\n").map((paragraph, index) => (
+              <p key={index} className="mb-4 leading-relaxed">
                 {paragraph}
               </p>
             ))}
           </div>
 
-          {/* Article Tags */}
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4">Tags</h3>
-            <div className="flex flex-wrap gap-2">
-              {article.tags.map((tag) => (
-                <span key={tag} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
-                  {tag}
-                </span>
-              ))}
+          {article.tags.length > 0 && (
+            <div className="mb-12">
+              <h3 className="text-lg font-semibold text-black dark:text-white mb-4">Tags</h3>
+              <div className="flex flex-wrap gap-2">
+                {article.tags.map((tag) => (
+                  <Badge key={tag} variant="outline" className="text-sm">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-8 mb-12">
+            <div className="flex items-start gap-4">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={article.author.avatar || "/placeholder.svg"} alt={article.author.name} />
+                <AvatarFallback>{article.author.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="text-lg font-semibold text-black dark:text-white mb-2">{article.author.name}</h3>
+                <p className="text-gray-600 dark:text-gray-400">{article.author.bio}</p>
+              </div>
             </div>
           </div>
-        </article>
 
-        <Separator className="my-12" />
-
-        {/* Related Articles */}
-        {relatedArticles.length > 0 && (
-          <section className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold font-serif text-black mb-8">Related Articles</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              {relatedArticles.map((relatedArticle) => (
-                <Link key={relatedArticle.id} href={`/article/${relatedArticle.slug}`} className="group">
-                  <article className="space-y-3">
-                    <Image
-                      src={relatedArticle.image || "/placeholder.svg"}
-                      alt={relatedArticle.title}
-                      width={300}
-                      height={200}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                    <div className="space-y-2">
-                      <span className="bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
-                        {relatedArticle.category}
-                      </span>
-                      <h3 className="font-bold font-serif text-black group-hover:text-gray-700 transition-colors leading-tight">
-                        {relatedArticle.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 line-clamp-2">{relatedArticle.summary}</p>
+          {relatedArticles.length > 0 && (
+            <section>
+              <h2 className="text-2xl font-bold font-serif text-black dark:text-white mb-6">Related Articles</h2>
+              <div className="grid md:grid-cols-3 gap-6">
+                {relatedArticles.map((relatedArticle) => (
+                  <Card key={relatedArticle.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="aspect-video relative">
+                      <Image
+                        src={relatedArticle.image || "/placeholder.svg"}
+                        alt={relatedArticle.title}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
-                  </article>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <Newsletter />
-      </main>
+                    <CardContent className="p-4">
+                      <Badge variant="secondary" className="text-xs mb-2">
+                        {relatedArticle.category}
+                      </Badge>
+                      <h3 className="font-semibold mb-2 line-clamp-2">
+                        <Link
+                          href={`/article/${relatedArticle.slug}`}
+                          className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        >
+                          {relatedArticle.title}
+                        </Link>
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{relatedArticle.summary}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      </article>
 
       <Footer />
     </div>
+  )
+}
+
+export default function ArticlePage({ params }: ArticlePageProps) {
+  return (
+    <Suspense fallback={<ArticleLoading />}>
+      <ArticlePageContent params={params} />
+    </Suspense>
   )
 }

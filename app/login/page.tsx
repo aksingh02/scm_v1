@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { getAllCategories } from "@/lib/data"
 import Link from "next/link"
+import { Suspense } from "react"
+import { PageSkeleton } from "@/components/loading/page-skeleton"
 
-export default function LoginPage() {
-  const categories = getAllCategories()
+async function LoginPageContent() {
+  const categories = await getAllCategories()
   const navigationItems = categories.map((category) => category.name)
 
   return (
@@ -104,5 +106,13 @@ export default function LoginPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <LoginPageContent />
+    </Suspense>
   )
 }

@@ -2,9 +2,11 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { getAllCategories } from "@/lib/data"
 import Image from "next/image"
+import { Suspense } from "react"
+import { PageSkeleton } from "@/components/loading/page-skeleton"
 
-export default function AboutPage() {
-  const categories = getAllCategories()
+async function AboutPageContent() {
+  const categories = await getAllCategories()
   const navigationItems = categories.map((category) => category.name)
 
   return (
@@ -163,5 +165,13 @@ export default function AboutPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function AboutPage() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <AboutPageContent />
+    </Suspense>
   )
 }

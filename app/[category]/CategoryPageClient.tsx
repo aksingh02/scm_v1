@@ -1,160 +1,114 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Header } from "@/components/header"
-import { RecentArticles } from "@/components/recent-articles"
-import { Newsletter } from "@/components/newsletter"
-import { Footer } from "@/components/footer"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import {
-  getAllCategories,
-  getArticlesByCategory,
-  getCategoryBySlug,
-  getTimeAgo,
-  type Article,
-  type Category,
-} from "@/lib/data"
-import { ArticlesGridSkeleton } from "@/components/loading/articles-grid-skeleton"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { getTimeAgo, type Article, type Category, getArticlesByCategory } from "@/lib/data"
+import Image from "next/image"
+import Link from "next/link"
+import { Loader2 } from "lucide-react"
 
 interface CategoryPageClientProps {
-  category: string
+  category: Category
+  initialArticles: Article[]
+  categorySlug: string
 }
 
-export default function CategoryPageClient({ category }: CategoryPageClientProps) {
-  const [articles, setArticles] = useState<Article[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [currentCategory, setCurrentCategory] = useState<Category | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [page, setPage] = useState(0)
-  const [hasMore, setHasMore] = useState(true)
+export function CategoryPageClient({ category, initialArticles, categorySlug }: CategoryPageClientProps) {
+  const [articles, setArticles] = useState<Article[]>(initialArticles)
+  const [loading, setLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(initialArticles.length >= 12)
 
-  useEffect(() => {
-    loadData()
-  }, [category])
+  const loadMoreArticles = async () => {
+    if (loading) return
 
-  const loadData = async () => {
+    setLoading(true)
     try {
-      setLoading(true)
-      setError(null)
+      const newArticles = await getArticlesByCategory(categorySlug, 12)
+      // Filter out articles we already have
+      const filteredNewArticles = newArticles.filter(
+        (newArticle) => !articles.some((existingArticle) => existingArticle.id === newArticle.id),
+      )
 
-      const [categoriesData, categoryData, articlesData] = await Promise.all([
-        getAllCategories(),
-        getCategoryBySlug(category),
-        getArticlesByCategory(category, 20),
-      ])
-
-      setCategories(categoriesData)
-      setCurrentCategory(categoryData)
-      setArticles(articlesData)
-      setHasMore(articlesData.length === 20) // If we got 20 articles, there might be more
-    } catch (err) {
-      console.error("Error loading category data:", err)
-      setError("Failed to load articles. Please try again.")
+      if (filteredNewArticles.length === 0) {
+        setHasMore(false)
+      } else {
+        setArticles((prev) => [...prev, ...filteredNewArticles])
+      }
+    } catch (error) {
+      console.error("Error loading more articles:", error)
+      setHasMore(false)
     } finally {
       setLoading(false)
     }
   }
 
-  const loadMore = async () => {
-    try {
-      const nextPage = page + 1
-      const moreArticles = await getArticlesByCategory(category, 20)
-
-      if (moreArticles.length === 0) {
-        setHasMore(false)
-      } else {
-        setArticles((prev) => [...prev, ...moreArticles])
-        setPage(nextPage)
-        setHasMore(moreArticles.length === 20)
-      }
-    } catch (err) {
-      console.error("Error loading more articles:", err)
-    }
-  }
-
-  const navigationItems = categories.map((cat) => cat.name)
-
-  // Transform articles for RecentArticles component
-  const transformedArticles = articles.map((article) => ({
-    title: article.title,
-    summary: article.summary,
-    image: article.image,
-    category: article.category,
-    readTime: article.readTime,
-    publishedAt: getTimeAgo(article.publishedAt),
-    slug: article.slug,
-    author: article.author,
-  }))
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Header navigationItems={navigationItems} />
-        <main className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <div className="h-8 bg-gray-200 rounded w-48 mb-4 animate-pulse"></div>
-            <div className="h-4 bg-gray-200 rounded w-96 animate-pulse"></div>
-          </div>
-          <ArticlesGridSkeleton />
-        </main>
-        <Footer />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Header navigationItems={navigationItems} />
-        <main className="container mx-auto px-4 py-8">
-          <div className="text-center py-12">
-            <p className="text-red-500 text-lg mb-4">{error}</p>
-            <Button onClick={loadData} className="bg-black text-white hover:bg-gray-800">
-              Try Again
-            </Button>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-white">
-      <Header navigationItems={navigationItems} />
+    <main className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-4xl md:text-5xl font-bold font-serif text-black dark:text-white mb-4">{category.name}</h1>
+        <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">{category.description}</p>
+      </div>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold font-serif text-black mb-4 capitalize">
-            {currentCategory?.name || category}
-          </h1>
-          <p className="text-gray-600">{currentCategory?.description || `Latest ${category} news and updates`}</p>
+      {articles.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-600 dark:text-gray-400 text-lg">No articles found in this category yet.</p>
         </div>
-
-        {articles.length > 0 ? (
-          <>
-            <RecentArticles articles={transformedArticles} />
-
-            {hasMore && (
-              <div className="text-center mt-12">
-                <Button onClick={loadMore} className="bg-black text-white hover:bg-gray-800">
-                  Load More Articles
-                </Button>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No articles found in this category.</p>
-            <p className="text-gray-400 mt-2">Check back later for new content.</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {articles.map((article) => (
+              <Card key={article.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="aspect-video relative">
+                  <Image src={article.image || "/placeholder.svg"} alt={article.title} fill className="object-cover" />
+                </div>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge variant="secondary" className="text-xs">
+                      {article.category}
+                    </Badge>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{getTimeAgo(article.publishedAt)}</span>
+                  </div>
+                  <h3 className="font-bold text-lg mb-2 line-clamp-2">
+                    <Link
+                      href={`/article/${article.slug}`}
+                      className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      {article.title}
+                    </Link>
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">{article.summary}</p>
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span>By {article.author.name}</span>
+                    <span>{article.readTime}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        )}
 
-        <Newsletter />
-      </main>
-
-      <Footer />
-    </div>
+          {hasMore && (
+            <div className="text-center">
+              <Button
+                onClick={loadMoreArticles}
+                disabled={loading}
+                variant="outline"
+                className="px-8 py-2 bg-transparent"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  "Load More Articles"
+                )}
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+    </main>
   )
 }

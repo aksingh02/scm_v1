@@ -1,6 +1,10 @@
-import { getAllCategories } from "@/lib/data"
-import CategoryPageClient from "./CategoryPageClient"
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
+import { getAllCategories, getCategoryBySlug, getArticlesByCategory } from "@/lib/data"
+import { CategoryPageClient } from "./CategoryPageClient"
 import { notFound } from "next/navigation"
+import { Suspense } from "react"
+import CategoryLoading from "./loading"
 
 interface CategoryPageProps {
   params: Promise<{
@@ -8,27 +12,46 @@ interface CategoryPageProps {
   }>
 }
 
-export default async function CategoryPage({ params }: CategoryPageProps) {
-  const resolvedParams = await params
+async function CategoryPageContent({ params }: CategoryPageProps) {
+  const { category: categorySlug } = await params
 
-  if (!resolvedParams.category) {
+  const [categories, categoryData, articles] = await Promise.all([
+    getAllCategories(),
+    getCategoryBySlug(categorySlug),
+    getArticlesByCategory(categorySlug, 12),
+  ])
+
+  if (!categoryData) {
     notFound()
   }
 
-  // Check if category exists
-  const categories = await getAllCategories()
-  const categoryExists = categories.some((cat) => cat.slug === resolvedParams.category.toLowerCase())
+  const navigationItems = categories.map((category) => category.name)
 
-  if (!categoryExists) {
-    notFound()
-  }
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
+      <Header navigationItems={navigationItems} />
+      <CategoryPageClient category={categoryData} initialArticles={articles} categorySlug={categorySlug} />
+      <Footer />
+    </div>
+  )
+}
 
-  return <CategoryPageClient category={resolvedParams.category} />
+export default function CategoryPage({ params }: CategoryPageProps) {
+  return (
+    <Suspense fallback={<CategoryLoading />}>
+      <CategoryPageContent params={params} />
+    </Suspense>
+  )
 }
 
 export async function generateStaticParams() {
-  const categories = await getAllCategories()
-  return categories.map((category) => ({
-    category: category.slug,
-  }))
+  try {
+    const categories = await getAllCategories()
+    return categories.map((category) => ({
+      category: category.slug,
+    }))
+  } catch (error) {
+    console.error("Error generating static params:", error)
+    return []
+  }
 }

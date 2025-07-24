@@ -1,11 +1,10 @@
 import { ArticlesGridSkeleton } from "@/components/loading/articles-grid-skeleton"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { getAllCategories } from "@/lib/data"
 
 export default function CategoryLoading() {
-  const categories = getAllCategories()
-  const navigationItems = categories.map((category) => category.name)
+  // Use fallback navigation items during loading
+  const navigationItems = ["Business", "Technology", "Science", "Politics", "Culture", "Health", "World"]
 
   return (
     <div className="min-h-screen bg-white">
