@@ -4,15 +4,16 @@ import type React from "react"
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { RefreshCw } from "lucide-react"
+import { useRouter } from 'next/navigation'
 
 interface PullToRefreshProps {
-  onRefresh: () => Promise<void>
   children: React.ReactNode
   threshold?: number
   resistance?: number
 }
 
-export function PullToRefresh({ onRefresh, children, threshold = 80, resistance = 2.5 }: PullToRefreshProps) {
+export function PullToRefresh({ children, threshold = 80, resistance = 2.5 }: PullToRefreshProps) {
+  const router = useRouter()
   const [pullDistance, setPullDistance] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [canRefresh, setCanRefresh] = useState(false)
@@ -20,6 +21,10 @@ export function PullToRefresh({ onRefresh, children, threshold = 80, resistance 
   const currentY = useRef(0)
   const isDragging = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  const handleRefresh = useCallback(async () => {
+    router.refresh()
+  }, [router])
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (window.scrollY === 0) {
@@ -53,7 +58,7 @@ export function PullToRefresh({ onRefresh, children, threshold = 80, resistance 
     if (canRefresh && !isRefreshing) {
       setIsRefreshing(true)
       try {
-        await onRefresh()
+        await handleRefresh()
       } catch (error) {
         console.error("Refresh failed:", error)
       } finally {
@@ -65,7 +70,7 @@ export function PullToRefresh({ onRefresh, children, threshold = 80, resistance 
       setPullDistance(0)
       setCanRefresh(false)
     }
-  }, [canRefresh, isRefreshing, onRefresh])
+  }, [canRefresh, isRefreshing, handleRefresh])
 
   useEffect(() => {
     const container = containerRef.current

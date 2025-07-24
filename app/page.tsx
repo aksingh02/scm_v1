@@ -16,16 +16,11 @@ async function HomePageContent() {
 
   const navigationItems = categories.map((category) => category.name)
 
-  const handleRefresh = async () => {
-    // Refresh logic would go here
-    window.location.reload()
-  }
-
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
       <Header navigationItems={navigationItems} />
 
-      <PullToRefresh onRefresh={handleRefresh}>
+      <PullToRefresh>
         <main>
           {featuredArticle && <FeaturedArticle article={featuredArticle} />}
           <RecentArticles articles={recentArticles} />
