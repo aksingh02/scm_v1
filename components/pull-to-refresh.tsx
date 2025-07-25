@@ -98,7 +98,7 @@ export function PullToRefresh({ children, threshold = 80, resistance = 2.5 }: Pu
   }
 
   return (
-    <div ref={containerRef} className="relative overflow-hidden">
+    <div ref={containerRef} className="relative overflow-hidden" style={{ margin: "1.5rem" }}>
       {/* Pull to Refresh Indicator */}
       <div
         className="absolute top-0 left-0 right-0 flex items-center justify-center py-4 z-10"
