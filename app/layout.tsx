@@ -11,7 +11,12 @@ export const metadata: Metadata = {
   title: "SylphCorps Media - Innovating Tomorrow's News Today",
   description:
     "Delivering tomorrow's news today through innovative journalism and cutting-edge technology. Your trusted source for comprehensive coverage of global events.",
-    generator: 'v0.dev'
+  generator: "v0.dev",
+  icons: {
+    icon: "/scm-fav.png",
+    shortcut: "/scm-fav.png",
+    apple: "/scm-fav.png",
+  },
 }
 
 export default function RootLayout({

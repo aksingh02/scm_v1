@@ -46,15 +46,15 @@ export function Header({ navigationItems = [] }: HeaderProps) {
       </div>
 
       {/* Main Header */}
-      <div className="container mx-auto px-4 py-4">
+      <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             <MobileNav navigationItems={["Home", ...navigationItems]} />
             <div className="text-center">
               <Link href="/" className="text-2xl md:text-3xl font-bold font-serif text-black dark:text-white block">
                 SylphCorps Media
               </Link>
-              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 italic">
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 italic mt-1">
                 Innovating Tomorrow's News Today
               </p>
             </div>
@@ -62,13 +62,28 @@ export function Header({ navigationItems = [] }: HeaderProps) {
 
           <div className="flex items-center space-x-4">
             <form action="/search" method="GET" className="hidden lg:flex items-center space-x-2">
-              <Search className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-              <Input
-                name="q"
-                placeholder="Search news..."
-                className="w-64 border-gray-300 dark:border-gray-600 focus:border-gray-500 dark:focus:border-gray-400 bg-white dark:bg-gray-800"
-              />
+              <div className="relative flex items-center">
+                <Search className="absolute left-3 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                <Input
+                  name="q"
+                  placeholder="Search news..."
+                  className="w-64 pl-10 border-gray-300 dark:border-gray-600 focus:border-gray-500 dark:focus:border-gray-400 bg-white dark:bg-gray-800"
+                />
+              </div>
+              <Button
+                type="submit"
+                size="sm"
+                className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
             </form>
+            <Link href="/subscribe">
+              <Button className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 text-sm px-4 py-2">
+                <span className="hidden sm:block">Subscribe</span>
+                <span className="sm:hidden">Sub</span>
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
@@ -76,7 +91,7 @@ export function Header({ navigationItems = [] }: HeaderProps) {
       {/* Desktop Navigation */}
       <nav className="border-t border-gray-200 dark:border-gray-800">
         <div className="container mx-auto px-4">
-          <div className="hidden md:flex items-center space-x-8 py-3 overflow-x-auto">
+          <div className="hidden md:flex items-center space-x-8 py-4 overflow-x-auto">
             <Link
               href="/"
               className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors whitespace-nowrap"
