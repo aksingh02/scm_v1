@@ -69,10 +69,6 @@ export function Header({ navigationItems = [] }: HeaderProps) {
                 className="w-64 border-gray-300 dark:border-gray-600 focus:border-gray-500 dark:focus:border-gray-400 bg-white dark:bg-gray-800"
               />
             </form>
-            <Button className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 text-sm px-3 py-2 md:px-4">
-              <span className="hidden sm:block">Subscribe</span>
-              <span className="sm:hidden">Sub</span>
-            </Button>
           </div>
         </div>
       </div>
