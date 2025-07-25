@@ -1,9 +1,11 @@
+import { Suspense } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { getAllCategories } from "@/lib/data"
+import { PageSkeleton } from "@/components/loading/page-skeleton"
 
-export default function CookiesPage() {
-  const categories = getAllCategories()
+async function CookiesPageContent() {
+  const categories = await getAllCategories()
   const navigationItems = categories.map((category) => category.name)
 
   return (
@@ -368,5 +370,13 @@ export default function CookiesPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function CookiesPage() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <CookiesPageContent />
+    </Suspense>
   )
 }

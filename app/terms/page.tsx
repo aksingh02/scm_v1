@@ -1,9 +1,11 @@
+import { Suspense } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { getAllCategories } from "@/lib/data"
+import { PageSkeleton } from "@/components/loading/page-skeleton"
 
-export default function TermsPage() {
-  const categories = getAllCategories()
+async function TermsPageContent() {
+  const categories = await getAllCategories()
   const navigationItems = categories.map((category) => category.name)
 
   return (
@@ -250,5 +252,13 @@ export default function TermsPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function TermsPage() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <TermsPageContent />
+    </Suspense>
   )
 }

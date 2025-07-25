@@ -1,9 +1,11 @@
+import { Suspense } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { getAllCategories } from "@/lib/data"
+import { PageSkeleton } from "@/components/loading/page-skeleton"
 
-export default function PrivacyPage() {
-  const categories = getAllCategories()
+async function PrivacyPageContent() {
+  const categories = await getAllCategories()
   const navigationItems = categories.map((category) => category.name)
 
   return (
@@ -229,5 +231,13 @@ export default function PrivacyPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function PrivacyPage() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <PrivacyPageContent />
+    </Suspense>
   )
 }
