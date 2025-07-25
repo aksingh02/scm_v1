@@ -20,13 +20,13 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Sections</h4>
             <ul className="space-y-2 text-sm text-gray-300 dark:text-gray-400">
               <li>
-                <Link href="/world" className="hover:text-white transition-colors">
-                  World
+                <Link href="/environment" className="hover:text-white transition-colors">
+                  Environment
                 </Link>
               </li>
               <li>
-                <Link href="/politics" className="hover:text-white transition-colors">
-                  Politics
+                <Link href="/world" className="hover:text-white transition-colors">
+                  World
                 </Link>
               </li>
               <li>
@@ -35,18 +35,13 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/tech" className="hover:text-white transition-colors">
+                <Link href="/technology" className="hover:text-white transition-colors">
                   Technology
                 </Link>
               </li>
               <li>
                 <Link href="/science" className="hover:text-white transition-colors">
                   Science
-                </Link>
-              </li>
-              <li>
-                <Link href="/sports" className="hover:text-white transition-colors">
-                  Sports
                 </Link>
               </li>
             </ul>
