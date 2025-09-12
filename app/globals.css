@@ -23,12 +23,12 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
   }
 
   .dark {
@@ -68,86 +68,34 @@
   }
 }
 
-@layer utilities {
-  .font-serif {
-    font-family: var(--font-playfair), serif;
-  }
-
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
+/* Custom dark mode styles for news website */
+.dark {
+  /* News-specific dark mode colors */
+  --news-bg: 15 23% 4%;
+  --news-card: 15 23% 6%;
+  --news-border: 15 17% 12%;
+  --news-text: 210 40% 98%;
+  --news-text-muted: 215 20.2% 65.1%;
+  --news-accent: 210 40% 8%;
 }
 
-/* Performance optimizations */
-.contain-layout {
-  contain: layout;
+/* Apply news-specific dark mode styles */
+.dark .news-bg {
+  background-color: hsl(var(--news-bg));
 }
 
-.contain-paint {
-  contain: paint;
+.dark .news-card {
+  background-color: hsl(var(--news-card));
 }
 
-.contain-size {
-  contain: size;
+.dark .news-border {
+  border-color: hsl(var(--news-border));
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
+.dark .news-text {
+  color: hsl(var(--news-text));
 }
 
-/* Focus styles for accessibility */
-.focus-visible:focus-visible {
-  @apply outline-2 outline-offset-2 outline-ring;
-}
-
-/* Loading animations */
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Print styles */
-@media print {
-  .no-print {
-    display: none !important;
-  }
-
-  body {
-    font-size: 12pt;
-    line-height: 1.4;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    page-break-after: avoid;
-  }
-
-  img {
-    max-width: 100% !important;
-    height: auto !important;
-  }
+.dark .news-text-muted {
+  color: hsl(var(--news-text-muted));
 }

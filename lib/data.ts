@@ -1,10 +1,10 @@
 import {
+  type ApiArticle,
   fetchArticles,
   fetchCategories,
   fetchArticleBySlug,
   fetchArticlesByCategory,
   searchArticles,
-  type ApiArticle,
 } from "./api"
 
 export interface Article {
@@ -220,121 +220,25 @@ export async function getRelatedArticles(currentArticle: Article, limit = 3): Pr
 
 // Format date
 export function formatDate(dateString: string): string {
-  try {
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) {
-      return "Recently"
-    }
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-  } catch (error) {
-    console.error("Error formatting date:", error)
-    return "Recently"
-  }
+  const date = new Date(dateString)
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
 }
 
-// Calculate time ago - ADDED MISSING EXPORT
+// Calculate time ago
 export function getTimeAgo(dateString: string): string {
-  try {
-    const date = new Date(dateString)
-    const now = new Date()
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
 
-    if (isNaN(date.getTime())) {
-      return "Recently"
-    }
+  if (diffInHours < 1) return "Just now"
+  if (diffInHours < 24) return `${diffInHours} hours ago`
 
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+  const diffInDays = Math.floor(diffInHours / 24)
+  if (diffInDays < 7) return `${diffInDays} days ago`
 
-    if (diffInHours < 1) return "Just now"
-    if (diffInHours < 24) return `${diffInHours} hours ago`
-
-    const diffInDays = Math.floor(diffInHours / 24)
-    if (diffInDays < 7) return `${diffInDays} days ago`
-
-    return formatDate(dateString)
-  } catch (error) {
-    console.error("Error calculating time ago:", error)
-    return "Recently"
-  }
-}
-
-// Format number for display
-export function formatNumber(num: number | undefined | null): string {
-  if (num === undefined || num === null || isNaN(num)) {
-    return "0"
-  }
-
-  try {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + "M"
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + "K"
-    }
-    return num.toString()
-  } catch (error) {
-    console.error("Error formatting number:", error)
-    return "0"
-  }
-}
-
-// Get trending articles
-export async function getTrendingArticles(limit = 5): Promise<Article[]> {
-  try {
-    const response = await fetchArticles(0, limit * 2)
-    // Sort by a combination of recent date and featured status
-    const sortedArticles = response.content
-      .sort((a, b) => {
-        const dateA = new Date(a.publishedAt).getTime()
-        const dateB = new Date(b.publishedAt).getTime()
-
-        // Prioritize featured articles and recent articles
-        if (a.featured && !b.featured) return -1
-        if (!a.featured && b.featured) return 1
-
-        return dateB - dateA // Most recent first
-      })
-      .slice(0, limit)
-      .map(transformApiArticle)
-
-    return sortedArticles
-  } catch (error) {
-    console.error("Error getting trending articles:", error)
-    return []
-  }
-}
-
-// Get articles by multiple tags
-export async function getArticlesByTags(tags: string[], limit = 10): Promise<Article[]> {
-  try {
-    const response = await fetchArticles(0, 100)
-    const filteredArticles = response.content
-      .filter((article) =>
-        tags.some((tag) => article.tags.some((articleTag) => articleTag.toLowerCase().includes(tag.toLowerCase()))),
-      )
-      .slice(0, limit)
-      .map(transformApiArticle)
-
-    return filteredArticles
-  } catch (error) {
-    console.error("Error getting articles by tags:", error)
-    return []
-  }
-}
-
-// Get popular articles (mock implementation based on recent articles)
-export async function getPopularArticles(limit = 5): Promise<Article[]> {
-  try {
-    const response = await fetchArticles(0, limit * 2)
-    // For now, just return recent articles as "popular"
-    // In a real implementation, this would be based on view counts, likes, etc.
-    const popularArticles = response.content.slice(0, limit).map(transformApiArticle)
-
-    return popularArticles
-  } catch (error) {
-    console.error("Error getting popular articles:", error)
-    return []
-  }
+  return formatDate(dateString)
 }
