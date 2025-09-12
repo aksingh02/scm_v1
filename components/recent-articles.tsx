@@ -31,11 +31,14 @@ export function RecentArticles({ articles }: RecentArticlesProps) {
               <div className="flex space-x-4">
                 <div className="flex-shrink-0">
                   <Image
-                    src={article.image || "/placeholder.svg"}
+                    src={article.image || "/svg/placeholder.svg"}
                     alt={article.title}
                     width={120}
                     height={80}
                     className="w-30 h-20 object-cover rounded"
+                    sizes="120px"
+                    priority={index < 2}
+                    loading={index < 2 ? "eager" : "lazy"}
                   />
                 </div>
                 <div className="flex-1 space-y-2">

@@ -52,14 +52,17 @@ export function Header({ navigationItems = [] }: HeaderProps) {
           <div className="flex items-center">
             <MobileNav navigationItems={["Home", ...navigationItems]} />
             <div>
-                <Image
-                  src="/images/logo/scm.png"
-                  alt="SylphCorps Media newsroom"
-                  width={70}
-                  height={70}
-                  className="rounded-lg shadow-lg"
-                />
-              </div>
+              <Image
+                src="/images/logo/scm.png"
+                alt="SylphCorps Media newsroom"
+                width={70}
+                height={70}
+                className="rounded-lg shadow-lg"
+                sizes="70px"
+                priority
+                loading="eager"
+              />
+            </div>
             <div className="ml-3 text-center d-flex">
               <Link href="/" className="text-2xl md:text-3xl font-bold font-serif text-black dark:text-white block">
                 SylphCorps Media

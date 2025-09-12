@@ -51,11 +51,14 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
         </div>
         <div className="order-first md:order-last">
           <Image
-            src={article.image || "/placeholder.svg"}
+            src={article.image || "/svg/placeholder.svg"}
             alt={article.title}
             width={600}
             height={400}
             className="w-full h-auto rounded-lg shadow-lg"
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority
+            loading="eager"
           />
         </div>
       </div>
