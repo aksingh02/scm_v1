@@ -1,132 +1,132 @@
 "use client"
-
-import React from "react"
-import Image from "next/image"
 import Link from "next/link"
+import Image from "next/image"
+import { Clock, Eye, Heart } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Card } from "@/components/ui/card"
-import { Eye, Heart, Clock } from "lucide-react"
-import type { Article } from "@/lib/api"
 
 interface FeaturedArticleProps {
-  article: Article
+  article: {
+    id: string
+    title: string
+    excerpt: string
+    imageUrl: string
+    category: string
+    publishedAt: string
+    slug: string
+    viewCount?: number
+    likeCount?: number
+    readTime?: number
+  }
 }
 
+// Safe number formatting function
 function formatNumber(num: number | undefined | null): string {
-  if (num == null || num === undefined) return "0"
+  if (num === undefined || num === null || isNaN(num)) {
+    return "0"
+  }
 
   try {
-    const number = typeof num === "string" ? Number.parseInt(num, 10) : num
-    if (isNaN(number)) return "0"
-
-    if (number >= 1000000) {
-      return (number / 1000000).toFixed(1) + "M"
-    } else if (number >= 1000) {
-      return (number / 1000).toFixed(1) + "K"
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + "M"
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + "K"
     }
-    return number.toString()
-  } catch {
+    return num.toString()
+  } catch (error) {
+    console.error("Error formatting number:", error)
     return "0"
   }
 }
 
+// Safe date formatting function
 function formatDate(dateString: string): string {
   try {
     const date = new Date(dateString)
-    if (isNaN(date.getTime())) return "Recently"
-
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "long",
+    if (isNaN(date.getTime())) {
+      return "Recently"
+    }
+    return date.toLocaleDateString("en-US", {
+      month: "short",
       day: "numeric",
-    }).format(date)
-  } catch {
+      year: "numeric",
+    })
+  } catch (error) {
+    console.error("Error formatting date:", error)
     return "Recently"
   }
 }
 
-const FeaturedArticle = React.memo<FeaturedArticleProps>(({ article }) => {
-  if (!article || !article.id) {
+export function FeaturedArticle({ article }: FeaturedArticleProps) {
+  if (!article) {
     return null
   }
 
   const {
-    title = "Untitled Article",
+    title = "Untitled",
     excerpt = "",
     imageUrl = "/placeholder.svg?height=400&width=600",
-    category = "News",
-    author = "Unknown Author",
+    category = "General",
     publishedAt = new Date().toISOString(),
     slug = "",
-    tags = [],
     viewCount = 0,
     likeCount = 0,
     readTime = 5,
   } = article
 
   return (
-    <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+    <Card className="overflow-hidden">
       <div className="relative">
-        <Link href={`/article/${slug}`} className="block">
-          <div className="relative aspect-[16/9] overflow-hidden">
-            <Image
-              src={imageUrl || "/placeholder.svg"}
-              alt={title}
-              fill
-              className="object-cover transition-transform duration-300 hover:scale-105"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 60vw"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          </div>
-
-          <div className="absolute top-4 left-4">
-            <Badge variant="secondary" className="bg-white/90 text-black hover:bg-white">
-              {category}
-            </Badge>
-          </div>
-
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <div className="flex flex-wrap gap-2 mb-3">
-              {tags.slice(0, 3).map((tag, index) => (
-                <Badge key={index} variant="outline" className="border-white/30 text-white text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-
-            <h1 className="text-2xl md:text-3xl font-bold font-serif mb-3 line-clamp-2">{title}</h1>
-
-            <p className="text-gray-200 text-base mb-4 line-clamp-2">{excerpt}</p>
-
-            <div className="flex items-center justify-between text-sm text-gray-300">
-              <div className="flex items-center space-x-4">
-                <span>By {author}</span>
-                <time dateTime={publishedAt}>{formatDate(publishedAt)}</time>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{readTime} min read</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Eye className="h-4 w-4" />
-                  <span>{formatNumber(viewCount)}</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Heart className="h-4 w-4" />
-                  <span>{formatNumber(likeCount)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Link>
+        <Image
+          src={imageUrl || "/placeholder.svg"}
+          alt={title}
+          width={600}
+          height={400}
+          className="w-full h-64 md:h-80 object-cover"
+          priority
+        />
+        <div className="absolute top-4 left-4">
+          <Badge variant="secondary" className="bg-black/80 text-white">
+            {category}
+          </Badge>
+        </div>
       </div>
+      <CardContent className="p-6">
+        <div className="space-y-4">
+          <Link href={`/article/${slug}`} className="block group">
+            <h2 className="text-2xl md:text-3xl font-bold font-serif leading-tight group-hover:text-blue-600 transition-colors">
+              {title}
+            </h2>
+          </Link>
+
+          <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed line-clamp-3">{excerpt}</p>
+
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-1">
+                <Clock className="h-4 w-4" />
+                <span>{readTime} min read</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Eye className="h-4 w-4" />
+                <span>{formatNumber(viewCount)} views</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Heart className="h-4 w-4" />
+                <span>{formatNumber(likeCount)} likes</span>
+              </div>
+            </div>
+            <time dateTime={publishedAt}>{formatDate(publishedAt)}</time>
+          </div>
+
+          <Link
+            href={`/article/${slug}`}
+            className="inline-block bg-black dark:bg-white text-white dark:text-black px-6 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+          >
+            Read Full Article
+          </Link>
+        </div>
+      </CardContent>
     </Card>
   )
-})
-
-FeaturedArticle.displayName = "FeaturedArticle"
-
-export { FeaturedArticle }
+}

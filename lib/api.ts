@@ -1,7 +1,7 @@
 const API_BASE_URL = "https://media-api.sylphcorps.com/api"
 const API_TIMEOUT = 8000
 
-// Simple LRU Cache implementation
+// LRU Cache implementation
 class LRUCache<T> {
   private cache = new Map<string, { value: T; timestamp: number }>()
   private maxSize: number
@@ -17,6 +17,7 @@ class LRUCache<T> {
     const item = this.cache.get(key)
     if (!item) return null
 
+    // Check if item has expired
     if (Date.now() - item.timestamp > this.ttl) {
       this.cache.delete(key)
       return null
@@ -29,9 +30,12 @@ class LRUCache<T> {
   }
 
   set(key: string, value: T): void {
+    // Remove oldest item if cache is full
     if (this.cache.size >= this.maxSize) {
       const firstKey = this.cache.keys().next().value
-      this.cache.delete(firstKey)
+      if (firstKey) {
+        this.cache.delete(firstKey)
+      }
     }
 
     this.cache.set(key, { value, timestamp: Date.now() })
@@ -42,37 +46,21 @@ class LRUCache<T> {
   }
 }
 
-const apiCache = new LRUCache(50, 300000) // 50 items, 5 minutes TTL
+// Create cache instance
+const apiCache = new LRUCache<any>(50, 300000) // 50 items, 5 minutes TTL
 
-export interface Article {
-  id: string
-  title: string
-  excerpt: string
-  content: string
-  imageUrl: string
-  category: string
-  author: string
-  publishedAt: string
-  slug: string
-  tags: string[]
-  viewCount?: number
-  likeCount?: number
-  readTime?: number
-}
-
-export interface ApiResponse<T> {
-  data: T
-  success: boolean
-  message?: string
-  pagination?: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-  }
-}
-
+// Enhanced fetch with timeout, retry, and caching
 async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+  // Check cache first
+  const cacheKey = `${url}_${JSON.stringify(options)}`
+  const cachedResponse = apiCache.get(cacheKey)
+  if (cachedResponse) {
+    return new Response(JSON.stringify(cachedResponse), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT)
 
@@ -83,142 +71,183 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        "Cache-Control": "public, max-age=300",
+        "Accept-Encoding": "gzip, deflate, br",
         ...options.headers,
       },
     })
+
     clearTimeout(timeoutId)
-    return response
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    // Cache successful responses
+    apiCache.set(cacheKey, data)
+
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: response.headers,
+    })
   } catch (error) {
     clearTimeout(timeoutId)
+
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Request timeout")
+    }
     throw error
   }
 }
 
-export async function getArticles(category?: string, page = 1, limit = 10): Promise<ApiResponse<Article[]>> {
-  const cacheKey = `articles-${category || "all"}-${page}-${limit}`
-  const cached = apiCache.get(cacheKey)
-  if (cached) return cached
+// API Response types
+export interface ApiResponse<T> {
+  content: T
+  totalPages: number
+  totalElements: number
+  size: number
+  number: number
+}
 
+export interface ApiArticle {
+  id: number
+  title: string
+  slug: string
+  description: string
+  excerpt: string
+  content: string
+  imageUrl: string
+  tags: string[]
+  publishedAt: string
+  featured: boolean
+  viewCount?: number
+  likeCount?: number
+}
+
+// Fetch articles with pagination
+export async function fetchArticles(page = 0, size = 20): Promise<ApiResponse<ApiArticle[]>> {
   try {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...(category && { category }),
-    })
-
-    const response = await fetchWithTimeout(`${API_BASE_URL}/articles?${params}`)
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
+    const url = `${API_BASE_URL}/articles?page=${page}&size=${size}&sort=publishedAt,desc`
+    const response = await fetchWithTimeout(url)
     const data = await response.json()
-    apiCache.set(cacheKey, data)
-    return data
+
+    return {
+      content: Array.isArray(data.content) ? data.content : [],
+      totalPages: data.totalPages || 0,
+      totalElements: data.totalElements || 0,
+      size: data.size || size,
+      number: data.number || page,
+    }
   } catch (error) {
     console.error("Error fetching articles:", error)
-    // Return fallback data
     return {
-      data: [],
-      success: false,
-      message: "Failed to fetch articles",
-      pagination: { page, limit, total: 0, totalPages: 0 },
+      content: [],
+      totalPages: 0,
+      totalElements: 0,
+      size,
+      number: page,
     }
   }
 }
 
-export async function getFeaturedArticles(): Promise<ApiResponse<Article[]>> {
-  const cacheKey = "featured-articles"
-  const cached = apiCache.get(cacheKey)
-  if (cached) return cached
-
+// Fetch single article by slug
+export async function fetchArticleBySlug(slug: string): Promise<ApiArticle | null> {
   try {
-    const response = await fetchWithTimeout(`${API_BASE_URL}/articles/featured`)
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
+    const url = `${API_BASE_URL}/articles/slug/${encodeURIComponent(slug)}`
+    const response = await fetchWithTimeout(url)
     const data = await response.json()
-    apiCache.set(cacheKey, data)
-    return data
+    return data || null
+  } catch (error) {
+    console.error(`Error fetching article by slug ${slug}:`, error)
+    return null
+  }
+}
+
+// Fetch articles by category
+export async function fetchArticlesByCategory(
+  category: string,
+  page = 0,
+  size = 20,
+): Promise<ApiResponse<ApiArticle[]>> {
+  try {
+    const url = `${API_BASE_URL}/articles/category/${encodeURIComponent(category)}?page=${page}&size=${size}`
+    const response = await fetchWithTimeout(url)
+    const data = await response.json()
+
+    return {
+      content: Array.isArray(data.content) ? data.content : [],
+      totalPages: data.totalPages || 0,
+      totalElements: data.totalElements || 0,
+      size: data.size || size,
+      number: data.number || page,
+    }
+  } catch (error) {
+    console.error(`Error fetching articles by category ${category}:`, error)
+    return {
+      content: [],
+      totalPages: 0,
+      totalElements: 0,
+      size,
+      number: page,
+    }
+  }
+}
+
+// Search articles
+export async function searchArticles(query: string): Promise<ApiArticle[]> {
+  try {
+    const url = `${API_BASE_URL}/articles/search?q=${encodeURIComponent(query)}`
+    const response = await fetchWithTimeout(url)
+    const data = await response.json()
+    return Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error(`Error searching articles with query "${query}":`, error)
+    return []
+  }
+}
+
+// Fetch categories
+export async function fetchCategories(): Promise<string[]> {
+  try {
+    const url = `${API_BASE_URL}/categories`
+    const response = await fetchWithTimeout(url)
+    const data = await response.json()
+    return Array.isArray(data)
+      ? data
+      : ["Technology", "Business", "Health", "Science", "Sports", "Entertainment", "Politics", "World"]
+  } catch (error) {
+    console.error("Error fetching categories:", error)
+    return ["Technology", "Business", "Health", "Science", "Sports", "Entertainment", "Politics", "World"]
+  }
+}
+
+// Fetch featured articles
+export async function fetchFeaturedArticles(): Promise<ApiArticle[]> {
+  try {
+    const url = `${API_BASE_URL}/articles/featured`
+    const response = await fetchWithTimeout(url)
+    const data = await response.json()
+    return Array.isArray(data) ? data : []
   } catch (error) {
     console.error("Error fetching featured articles:", error)
-    return {
-      data: [],
-      success: false,
-      message: "Failed to fetch featured articles",
-    }
+    return []
   }
 }
 
-export async function getArticleBySlug(slug: string): Promise<ApiResponse<Article>> {
-  const cacheKey = `article-${slug}`
-  const cached = apiCache.get(cacheKey)
-  if (cached) return cached
-
-  try {
-    const response = await fetchWithTimeout(`${API_BASE_URL}/articles/${slug}`)
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const data = await response.json()
-    apiCache.set(cacheKey, data)
-    return data
-  } catch (error) {
-    console.error(`Error fetching article ${slug}:`, error)
-    return {
-      data: {} as Article,
-      success: false,
-      message: "Failed to fetch article",
-    }
-  }
-}
-
-export async function searchArticles(query: string, page = 1, limit = 10): Promise<ApiResponse<Article[]>> {
-  if (!query.trim()) {
-    return {
-      data: [],
-      success: true,
-      pagination: { page, limit, total: 0, totalPages: 0 },
-    }
-  }
-
-  const cacheKey = `search-${query}-${page}-${limit}`
-  const cached = apiCache.get(cacheKey)
-  if (cached) return cached
-
-  try {
-    const params = new URLSearchParams({
-      q: query,
-      page: page.toString(),
-      limit: limit.toString(),
-    })
-
-    const response = await fetchWithTimeout(`${API_BASE_URL}/articles/search?${params}`)
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const data = await response.json()
-    apiCache.set(cacheKey, data)
-    return data
-  } catch (error) {
-    console.error("Error searching articles:", error)
-    return {
-      data: [],
-      success: false,
-      message: "Failed to search articles",
-      pagination: { page, limit, total: 0, totalPages: 0 },
-    }
-  }
-}
-
-// Clear cache function for manual cache invalidation
+// Clear cache (useful for development)
 export function clearApiCache(): void {
   apiCache.clear()
+}
+
+// Health check
+export async function healthCheck(): Promise<boolean> {
+  try {
+    const url = `${API_BASE_URL}/health`
+    const response = await fetchWithTimeout(url)
+    return response.status === 200
+  } catch (error) {
+    console.error("API health check failed:", error)
+    return false
+  }
 }
