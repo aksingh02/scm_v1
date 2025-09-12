@@ -1,126 +1,132 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Clock, Eye, Heart } from "lucide-react"
+import React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { memo } from "react"
-
-interface Article {
-  id: number
-  title: string
-  description: string
-  excerpt: string
-  imageUrl: string
-  slug: string
-  tags: string[]
-  publishedAt: string
-  viewCount?: number
-  likeCount?: number
-}
+import { Badge } from "@/components/ui/badge"
+import { Card } from "@/components/ui/card"
+import { Eye, Heart, Clock } from "lucide-react"
+import type { Article } from "@/lib/api"
 
 interface FeaturedArticleProps {
   article: Article
 }
 
-const FeaturedArticle = memo(function FeaturedArticle({ article }: FeaturedArticleProps) {
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    } catch {
-      return "Recent"
+function formatNumber(num: number | undefined | null): string {
+  if (num == null || num === undefined) return "0"
+
+  try {
+    const number = typeof num === "string" ? Number.parseInt(num, 10) : num
+    if (isNaN(number)) return "0"
+
+    if (number >= 1000000) {
+      return (number / 1000000).toFixed(1) + "M"
+    } else if (number >= 1000) {
+      return (number / 1000).toFixed(1) + "K"
     }
+    return number.toString()
+  } catch {
+    return "0"
+  }
+}
+
+function formatDate(dateString: string): string {
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return "Recently"
+
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(date)
+  } catch {
+    return "Recently"
+  }
+}
+
+const FeaturedArticle = React.memo<FeaturedArticleProps>(({ article }) => {
+  if (!article || !article.id) {
+    return null
   }
 
-  const formatNumber = (num?: number) => {
-    if (typeof num !== "number" || isNaN(num)) {
-      return "0"
-    }
-
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + "M"
-    }
-    if (num >= 1000) {
-      return (num / 1000).toFixed(1) + "K"
-    }
-    return num.toString()
-  }
-
-  const safeViewCount = article.viewCount ?? 0
-  const safeLikeCount = article.likeCount ?? 0
-  const safeTags = Array.isArray(article.tags) ? article.tags : []
+  const {
+    title = "Untitled Article",
+    excerpt = "",
+    imageUrl = "/placeholder.svg?height=400&width=600",
+    category = "News",
+    author = "Unknown Author",
+    publishedAt = new Date().toISOString(),
+    slug = "",
+    tags = [],
+    viewCount = 0,
+    likeCount = 0,
+    readTime = 5,
+  } = article
 
   return (
-    <section className="container mx-auto px-4 py-8" aria-labelledby="featured-article">
-      <div className="grid md:grid-cols-2 gap-8 items-center">
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {safeTags.slice(0, 2).map((tag, index) => (
-              <Badge key={`${tag}-${index}`} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
+    <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="relative">
+        <Link href={`/article/${slug}`} className="block">
+          <div className="relative aspect-[16/9] overflow-hidden">
+            <Image
+              src={imageUrl || "/placeholder.svg"}
+              alt={title}
+              fill
+              className="object-cover transition-transform duration-300 hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 60vw"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           </div>
 
-          <h1
-            id="featured-article"
-            className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight text-gray-900 dark:text-white"
-          >
-            {article.title || "Untitled Article"}
-          </h1>
-
-          <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-            {article.description || article.excerpt || "No description available."}
-          </p>
-
-          <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
-            <div className="flex items-center space-x-1">
-              <Clock className="h-4 w-4" aria-hidden="true" />
-              <time dateTime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Eye className="h-4 w-4" aria-hidden="true" />
-              <span>{formatNumber(safeViewCount)} views</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Heart className="h-4 w-4" aria-hidden="true" />
-              <span>{formatNumber(safeLikeCount)} likes</span>
-            </div>
+          <div className="absolute top-4 left-4">
+            <Badge variant="secondary" className="bg-white/90 text-black hover:bg-white">
+              {category}
+            </Badge>
           </div>
 
-          <Button
-            asChild
-            size="lg"
-            className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
-          >
-            <Link href={`/article/${article.slug || article.id}`}>Read Full Article</Link>
-          </Button>
-        </div>
-
-        <Card className="overflow-hidden">
-          <CardContent className="p-0">
-            <div className="relative aspect-video">
-              <Image
-                src={article.imageUrl || "/svg/placeholder.svg"}
-                alt={article.title || "Article image"}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                priority
-                quality={85}
-              />
+          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+            <div className="flex flex-wrap gap-2 mb-3">
+              {tags.slice(0, 3).map((tag, index) => (
+                <Badge key={index} variant="outline" className="border-white/30 text-white text-xs">
+                  {tag}
+                </Badge>
+              ))}
             </div>
-          </CardContent>
-        </Card>
+
+            <h1 className="text-2xl md:text-3xl font-bold font-serif mb-3 line-clamp-2">{title}</h1>
+
+            <p className="text-gray-200 text-base mb-4 line-clamp-2">{excerpt}</p>
+
+            <div className="flex items-center justify-between text-sm text-gray-300">
+              <div className="flex items-center space-x-4">
+                <span>By {author}</span>
+                <time dateTime={publishedAt}>{formatDate(publishedAt)}</time>
+              </div>
+
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-1">
+                  <Clock className="h-4 w-4" />
+                  <span>{readTime} min read</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Eye className="h-4 w-4" />
+                  <span>{formatNumber(viewCount)}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Heart className="h-4 w-4" />
+                  <span>{formatNumber(likeCount)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Link>
       </div>
-    </section>
+    </Card>
   )
 })
+
+FeaturedArticle.displayName = "FeaturedArticle"
 
 export { FeaturedArticle }

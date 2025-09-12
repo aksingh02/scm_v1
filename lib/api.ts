@@ -1,48 +1,40 @@
 const API_BASE_URL = "https://media-api.sylphcorps.com/api"
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-const REQUEST_TIMEOUT = 8000 // 8 seconds
+const API_TIMEOUT = 8000
 
-interface CacheEntry<T> {
-  data: T
-  timestamp: number
-  compressed?: boolean
-}
-
+// Simple LRU Cache implementation
 class LRUCache<T> {
-  private cache = new Map<string, CacheEntry<T>>()
+  private cache = new Map<string, { value: T; timestamp: number }>()
   private maxSize: number
+  private ttl: number
 
-  constructor(maxSize = 100) {
+  constructor(maxSize = 100, ttl = 300000) {
+    // 5 minutes TTL
     this.maxSize = maxSize
+    this.ttl = ttl
   }
 
   get(key: string): T | null {
-    const entry = this.cache.get(key)
-    if (!entry) return null
+    const item = this.cache.get(key)
+    if (!item) return null
 
-    if (Date.now() - entry.timestamp > CACHE_TTL) {
+    if (Date.now() - item.timestamp > this.ttl) {
       this.cache.delete(key)
       return null
     }
 
     // Move to end (most recently used)
     this.cache.delete(key)
-    this.cache.set(key, entry)
-    return entry.data
+    this.cache.set(key, item)
+    return item.value
   }
 
-  set(key: string, data: T, compressed = false): void {
+  set(key: string, value: T): void {
     if (this.cache.size >= this.maxSize) {
-      // Remove least recently used
       const firstKey = this.cache.keys().next().value
       this.cache.delete(firstKey)
     }
 
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now(),
-      compressed,
-    })
+    this.cache.set(key, { value, timestamp: Date.now() })
   }
 
   clear(): void {
@@ -50,25 +42,51 @@ class LRUCache<T> {
   }
 }
 
-const cache = new LRUCache<any>(50)
+const apiCache = new LRUCache(50, 300000) // 50 items, 5 minutes TTL
+
+export interface Article {
+  id: string
+  title: string
+  excerpt: string
+  content: string
+  imageUrl: string
+  category: string
+  author: string
+  publishedAt: string
+  slug: string
+  tags: string[]
+  viewCount?: number
+  likeCount?: number
+  readTime?: number
+}
+
+export interface ApiResponse<T> {
+  data: T
+  success: boolean
+  message?: string
+  pagination?: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
 
 async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT)
 
   try {
     const response = await fetch(url, {
       ...options,
       signal: controller.signal,
       headers: {
+        "Content-Type": "application/json",
         Accept: "application/json",
-        "Accept-Encoding": "gzip, deflate, br",
-        Connection: "keep-alive",
-        "Cache-Control": "no-cache",
+        "Cache-Control": "public, max-age=300",
         ...options.headers,
       },
     })
-
     clearTimeout(timeoutId)
     return response
   } catch (error) {
@@ -77,93 +95,130 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
   }
 }
 
-async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const cacheKey = `${endpoint}-${JSON.stringify(options)}`
-
-  // Check cache first
-  const cachedData = cache.get(cacheKey)
-  if (cachedData) {
-    return cachedData
-  }
-
-  const url = `${API_BASE_URL}${endpoint}`
+export async function getArticles(category?: string, page = 1, limit = 10): Promise<ApiResponse<Article[]>> {
+  const cacheKey = `articles-${category || "all"}-${page}-${limit}`
+  const cached = apiCache.get(cacheKey)
+  if (cached) return cached
 
   try {
-    const response = await fetchWithTimeout(url, {
-      ...options,
-      next: { revalidate: 300 }, // 5 minutes
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(category && { category }),
     })
+
+    const response = await fetchWithTimeout(`${API_BASE_URL}/articles?${params}`)
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
     const data = await response.json()
-
-    // Cache the response
-    cache.set(cacheKey, data, response.headers.get("content-encoding") === "gzip")
-
+    apiCache.set(cacheKey, data)
     return data
   } catch (error) {
-    console.error(`API request failed for ${endpoint}:`, error)
+    console.error("Error fetching articles:", error)
+    // Return fallback data
+    return {
+      data: [],
+      success: false,
+      message: "Failed to fetch articles",
+      pagination: { page, limit, total: 0, totalPages: 0 },
+    }
+  }
+}
 
-    // Return fallback data if available
-    const fallbackData = getFallbackData(endpoint)
-    if (fallbackData) {
-      return fallbackData
+export async function getFeaturedArticles(): Promise<ApiResponse<Article[]>> {
+  const cacheKey = "featured-articles"
+  const cached = apiCache.get(cacheKey)
+  if (cached) return cached
+
+  try {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/articles/featured`)
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
 
-    throw error
-  }
-}
-
-function getFallbackData(endpoint: string): any {
-  // Provide fallback data for critical endpoints
-  if (endpoint === "/articles") {
-    return []
-  }
-  return null
-}
-
-export async function getArticles(): Promise<any[]> {
-  try {
-    return await apiRequest("/articles")
+    const data = await response.json()
+    apiCache.set(cacheKey, data)
+    return data
   } catch (error) {
-    console.error("Failed to fetch articles:", error)
-    return []
+    console.error("Error fetching featured articles:", error)
+    return {
+      data: [],
+      success: false,
+      message: "Failed to fetch featured articles",
+    }
   }
 }
 
-export async function getArticleBySlug(slug: string): Promise<any> {
-  try {
-    return await apiRequest(`/articles/${slug}`)
-  } catch (error) {
-    console.error(`Failed to fetch article ${slug}:`, error)
-    throw error
-  }
-}
-
-export async function getArticlesByCategory(category: string): Promise<any[]> {
-  try {
-    return await apiRequest(`/articles/category/${category}`)
-  } catch (error) {
-    console.error(`Failed to fetch articles for category ${category}:`, error)
-    return []
-  }
-}
-
-export async function searchArticles(query: string): Promise<any[]> {
-  if (!query.trim()) return []
+export async function getArticleBySlug(slug: string): Promise<ApiResponse<Article>> {
+  const cacheKey = `article-${slug}`
+  const cached = apiCache.get(cacheKey)
+  if (cached) return cached
 
   try {
-    return await apiRequest(`/articles/search?q=${encodeURIComponent(query)}`)
+    const response = await fetchWithTimeout(`${API_BASE_URL}/articles/${slug}`)
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    apiCache.set(cacheKey, data)
+    return data
   } catch (error) {
-    console.error(`Failed to search articles for query ${query}:`, error)
-    return []
+    console.error(`Error fetching article ${slug}:`, error)
+    return {
+      data: {} as Article,
+      success: false,
+      message: "Failed to fetch article",
+    }
+  }
+}
+
+export async function searchArticles(query: string, page = 1, limit = 10): Promise<ApiResponse<Article[]>> {
+  if (!query.trim()) {
+    return {
+      data: [],
+      success: true,
+      pagination: { page, limit, total: 0, totalPages: 0 },
+    }
+  }
+
+  const cacheKey = `search-${query}-${page}-${limit}`
+  const cached = apiCache.get(cacheKey)
+  if (cached) return cached
+
+  try {
+    const params = new URLSearchParams({
+      q: query,
+      page: page.toString(),
+      limit: limit.toString(),
+    })
+
+    const response = await fetchWithTimeout(`${API_BASE_URL}/articles/search?${params}`)
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    apiCache.set(cacheKey, data)
+    return data
+  } catch (error) {
+    console.error("Error searching articles:", error)
+    return {
+      data: [],
+      success: false,
+      message: "Failed to search articles",
+      pagination: { page, limit, total: 0, totalPages: 0 },
+    }
   }
 }
 
 // Clear cache function for manual cache invalidation
 export function clearApiCache(): void {
-  cache.clear()
+  apiCache.clear()
 }

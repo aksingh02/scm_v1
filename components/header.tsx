@@ -1,55 +1,46 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useCallback, useMemo } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { Search, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { MobileNav } from "@/components/mobile-nav"
-import { Search, Menu } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { debounce } from "lodash"
+import { useDebounce } from "@/hooks/use-debounce"
 
 const categories = [
-  { name: "Politics", href: "/politics" },
-  { name: "Technology", href: "/technology" },
+  { name: "Environment", href: "/environment" },
+  { name: "World", href: "/world" },
   { name: "Business", href: "/business" },
-  { name: "Sports", href: "/sports" },
-  { name: "Entertainment", href: "/entertainment" },
-  { name: "Health", href: "/health" },
+  { name: "Technology", href: "/technology" },
+  { name: "Science", href: "/science" },
 ]
 
-export function Header() {
+const Header = React.memo(() => {
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const router = useRouter()
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-  const debouncedSearch = useMemo(
-    () =>
-      debounce((query: string) => {
-        if (query.trim()) {
-          router.push(`/search?q=${encodeURIComponent(query)}`)
-          setIsSearchOpen(false)
-        }
-      }, 300),
-    [router],
-  )
+  useEffect(() => {
+    if (debouncedSearchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(debouncedSearchQuery)}`)
+    }
+  }, [debouncedSearchQuery, router])
 
-  const handleSearch = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault()
-      debouncedSearch(searchQuery)
-    },
-    [searchQuery, debouncedSearch],
-  )
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
+      setIsSearchOpen(false)
+    }
+  }
 
-  const handleSearchInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-  }, [])
+  const memoizedCategories = useMemo(() => categories, [])
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -58,25 +49,23 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2" aria-label="SylphCorps Media Home">
             <Image
-              src="/images/logo/scm.webp"
+              src="/images/logo/scm.png"
               alt="SylphCorps Media"
               width={40}
               height={40}
               className="rounded-lg"
               priority
             />
-            <span className="text-xl md:text-2xl font-bold font-serif text-black dark:text-white">
-              SylphCorps Media
-            </span>
+            <span className="text-xl font-bold font-serif hidden sm:block">SylphCorps Media</span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6" role="navigation" aria-label="Main navigation">
-            {categories.map((category) => (
+            {memoizedCategories.map((category) => (
               <Link
                 key={category.name}
                 href={category.href}
-                className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
+                className="text-sm font-medium transition-colors hover:text-primary"
               >
                 {category.name}
               </Link>
@@ -84,65 +73,48 @@ export function Header() {
           </nav>
 
           {/* Search and Actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             {/* Desktop Search */}
             <div className="hidden md:block">
-              {isSearchOpen ? (
-                <form onSubmit={handleSearch} className="flex items-center space-x-2">
-                  <Input
-                    type="search"
-                    placeholder="Search articles..."
-                    value={searchQuery}
-                    onChange={handleSearchInputChange}
-                    className="w-64"
-                    autoFocus
-                    aria-label="Search articles"
-                  />
-                  <Button type="submit" size="sm" aria-label="Submit search">
-                    <Search className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setIsSearchOpen(false)
-                      setSearchQuery("")
-                    }}
-                    aria-label="Close search"
-                  >
-                    Cancel
-                  </Button>
-                </form>
-              ) : (
-                <Button variant="ghost" size="sm" onClick={() => setIsSearchOpen(true)} aria-label="Open search">
-                  <Search className="h-4 w-4" />
-                </Button>
-              )}
+              <form onSubmit={handleSearchSubmit} className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search news..."
+                  className="pl-8 w-64"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search news articles"
+                />
+              </form>
             </div>
 
-            {/* Mobile Search */}
-            <div className="md:hidden">
-              <Button variant="ghost" size="sm" onClick={() => router.push("/search")} aria-label="Search">
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
+            {/* Mobile Search Toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              aria-label="Toggle search"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
 
             <ThemeToggle />
 
             {/* Mobile Menu */}
             <Sheet>
-              <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="sm" aria-label="Open menu">
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm" className="md:hidden" aria-label="Open menu">
                   <Menu className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-80">
-                <MobileNav categories={categories} />
+                <MobileNav categories={memoizedCategories} />
               </SheetContent>
             </Sheet>
 
-            {/* Desktop Auth Buttons */}
+            {/* Auth Buttons */}
             <div className="hidden md:flex items-center space-x-2">
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/login">Login</Link>
@@ -153,7 +125,39 @@ export function Header() {
             </div>
           </div>
         </div>
+
+        {/* Mobile Search Bar */}
+        {isSearchOpen && (
+          <div className="md:hidden py-2 border-t">
+            <form onSubmit={handleSearchSubmit} className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search news..."
+                className="pl-8 w-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+                aria-label="Search news articles"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1"
+                onClick={() => setIsSearchOpen(false)}
+                aria-label="Close search"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
+        )}
       </div>
     </header>
   )
-}
+})
+
+Header.displayName = "Header"
+
+export { Header }

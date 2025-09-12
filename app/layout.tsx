@@ -14,31 +14,24 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "SylphCorps Media - Breaking News & Analysis",
+  title: "SylphCorps Media - Innovating Tomorrow's News Today",
   description:
-    "Stay informed with the latest breaking news, in-depth analysis, and expert commentary from SylphCorps Media. Your trusted source for global news coverage.",
-  keywords: "news, breaking news, analysis, global news, current events, journalism",
-  authors: [{ name: "SylphCorps Media" }],
-  creator: "SylphCorps Media",
-  publisher: "SylphCorps Media",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
+    "Delivering tomorrow's news today through innovative journalism and cutting-edge technology. Your trusted source for comprehensive coverage of global events.",
+  generator: "v0.dev",
+  icons: {
+    icon: "/images/logo/scm.png",
+    shortcut: "/images/logo/scm.png",
+    apple: "/images/logo/scm.png",
   },
   metadataBase: new URL("https://media.sylphcorps.com"),
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
-    title: "SylphCorps Media - Breaking News & Analysis",
-    description:
-      "Stay informed with the latest breaking news, in-depth analysis, and expert commentary from SylphCorps Media.",
+    title: "SylphCorps Media - Innovating Tomorrow's News Today",
+    description: "Delivering tomorrow's news today through innovative journalism and cutting-edge technology.",
     url: "https://media.sylphcorps.com",
     siteName: "SylphCorps Media",
     images: [
       {
-        url: "/images/logo/scm.webp",
+        url: "/images/logo/scm.png",
         width: 1200,
         height: 630,
         alt: "SylphCorps Media",
@@ -49,10 +42,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "SylphCorps Media - Breaking News & Analysis",
-    description:
-      "Stay informed with the latest breaking news, in-depth analysis, and expert commentary from SylphCorps Media.",
-    images: ["/images/logo/scm.webp"],
+    title: "SylphCorps Media - Innovating Tomorrow's News Today",
+    description: "Delivering tomorrow's news today through innovative journalism and cutting-edge technology.",
+    images: ["/images/logo/scm.png"],
   },
   robots: {
     index: true,
@@ -65,7 +57,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-    generator: 'v0.app'
 }
 
 export default function RootLayout({
@@ -78,25 +69,6 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://scm-s3-image-bucket.s3.ap-south-1.amazonaws.com" />
         <link rel="dns-prefetch" href="https://media-api.sylphcorps.com" />
-        <link rel="preload" href="/images/logo/scm.webp" as="image" type="image/webp" />
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `
-            .line-clamp-2 {
-              display: -webkit-box;
-              -webkit-line-clamp: 2;
-              -webkit-box-orient: vertical;
-              overflow: hidden;
-            }
-            .line-clamp-3 {
-              display: -webkit-box;
-              -webkit-line-clamp: 3;
-              -webkit-box-orient: vertical;
-              overflow: hidden;
-            }
-          `,
-          }}
-        />
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>

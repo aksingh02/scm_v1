@@ -2,9 +2,8 @@
 const nextConfig = {
   experimental: {
     optimizeCss: true,
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
-  compress: true,
-  poweredByHeader: false,
   images: {
     remotePatterns: [
       {
@@ -15,85 +14,40 @@ const nextConfig = {
       },
     ],
     formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 31536000,
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    quality: 85,
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     unoptimized: true, // Added from updates
   },
-  webpack: (config, { dev, isServer }) => {
-    if (!dev && !isServer) {
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          framework: {
-            chunks: 'all',
-            name: 'framework',
-            test: /(?<!node_modules.*)[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types|use-subscription)[\\/]/,
-            priority: 40,
-            enforce: true,
-          },
-          lib: {
-            test(module) {
-              return module.size() > 160000 && /node_modules[/\\]/.test(module.identifier())
-            },
-            name(module) {
-              const hash = crypto.createHash('sha1')
-              hash.update(module.libIdent ? module.libIdent({ context: config.context }) : module.identifier())
-              return hash.digest('hex').substring(0, 8)
-            },
-            priority: 30,
-            minChunks: 1,
-            reuseExistingChunk: true,
-          },
-          commons: {
-            name: 'commons',
-            minChunks: 2,
-            priority: 20,
-          },
-        },
-      }
-    }
-    
-    config.module.rules.push({
-      test: /\.(js|jsx|ts|tsx)$/,
-      use: {
-        loader: 'babel-loader',
-        options: {
-          presets: ['next/babel'],
-          plugins: [
-            ['babel-plugin-transform-imports', {
-              'lucide-react': {
-                transform: 'lucide-react/dist/esm/icons/{{member}}',
-                skipDefaultConversion: true,
-              },
-            }],
-          ],
-        },
-      },
-    })
-
-    return config
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: false,
+  eslint: {
+    ignoreDuringBuilds: true, // Added from updates
   },
-  headers: async () => {
+  typescript: {
+    ignoreBuildErrors: true, // Added from updates
+  },
+  async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
             key: 'X-Frame-Options',
             value: 'DENY',
           },
           {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
+            value: 'origin-when-cross-origin',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },
@@ -102,35 +56,11 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=300, stale-while-revalidate=600',
-          },
-        ],
-      },
-      {
-        source: '/_next/static/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        source: '/images/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: 'public, max-age=300, s-maxage=300',
           },
         ],
       },
     ]
-  },
-  eslint: {
-    ignoreDuringBuilds: true, // Added from updates
-  },
-  typescript: {
-    ignoreBuildErrors: true, // Added from updates
   },
 }
 

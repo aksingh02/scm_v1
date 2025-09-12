@@ -1,57 +1,77 @@
+import { Suspense } from "react"
+import { getArticles, getFeaturedArticles } from "@/lib/api"
 import { FeaturedArticle } from "@/components/featured-article"
 import { RecentArticles } from "@/components/recent-articles"
 import { Newsletter } from "@/components/newsletter"
 import { PullToRefresh } from "@/components/pull-to-refresh"
-import { getArticles } from "@/lib/api"
-import { Suspense } from "react"
 import { FeaturedSkeleton } from "@/components/loading/featured-skeleton"
 import { ArticlesGridSkeleton } from "@/components/loading/articles-grid-skeleton"
 
-async function HomePage() {
+async function FeaturedSection() {
   try {
-    const articles = await getArticles()
+    const featuredResponse = await getFeaturedArticles()
+    const featuredArticle = featuredResponse.data?.[0]
 
-    if (!articles || articles.length === 0) {
+    if (!featuredArticle) {
       return (
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">No articles available</h1>
-            <p className="text-gray-600 dark:text-gray-400">Please check back later for the latest news.</p>
-          </div>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No featured articles available at the moment.</p>
         </div>
       )
     }
 
-    const [featuredArticle, ...recentArticles] = articles
-
-    return (
-      <PullToRefresh>
-        <div className="space-y-12">
-          <Suspense fallback={<FeaturedSkeleton />}>
-            <FeaturedArticle article={featuredArticle} />
-          </Suspense>
-
-          <Suspense fallback={<ArticlesGridSkeleton />}>
-            <RecentArticles articles={recentArticles.slice(0, 6)} />
-          </Suspense>
-
-          <Newsletter />
-        </div>
-      </PullToRefresh>
-    )
+    return <FeaturedArticle article={featuredArticle} />
   } catch (error) {
-    console.error("Error loading homepage:", error)
+    console.error("Error loading featured article:", error)
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Unable to load articles</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            We're experiencing technical difficulties. Please try again later.
-          </p>
-        </div>
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Unable to load featured article.</p>
       </div>
     )
   }
 }
 
-export default HomePage
+async function RecentSection() {
+  try {
+    const articlesResponse = await getArticles(undefined, 1, 8)
+    const articles = articlesResponse.data || []
+
+    return <RecentArticles articles={articles} />
+  } catch (error) {
+    console.error("Error loading recent articles:", error)
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">Unable to load recent articles.</p>
+      </div>
+    )
+  }
+}
+
+export default function HomePage() {
+  return (
+    <PullToRefresh>
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Featured Article */}
+          <div className="lg:col-span-2">
+            <Suspense fallback={<FeaturedSkeleton />}>
+              <FeaturedSection />
+            </Suspense>
+          </div>
+
+          {/* Recent Articles Sidebar */}
+          <div className="lg:col-span-1">
+            <Suspense fallback={<ArticlesGridSkeleton />}>
+              <RecentSection />
+            </Suspense>
+          </div>
+        </div>
+
+        {/* Newsletter Section */}
+        <div className="mt-16">
+          <Newsletter />
+        </div>
+      </div>
+    </PullToRefresh>
+  )
+}
