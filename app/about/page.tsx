@@ -31,7 +31,7 @@ async function AboutPageContent() {
             <div className="grid md:grid-cols-2 gap-12 items-center mb-12">
               <div>
                 <Image
-                  src="/placeholder.svg?height=400&width=600"
+                  src="/images/scm-mission.png"
                   alt="SylphCorps Media newsroom"
                   width={600}
                   height={400}
@@ -55,7 +55,16 @@ async function AboutPageContent() {
 
             <div className="mb-12">
               <h2 className="text-2xl font-bold font-serif text-black dark:text-white mb-6">Our Innovation</h2>
-              <div className="grid md:grid-cols-3 gap-8">
+              <div>
+                <Image
+                  src="/images/scm-innovation-tag-img.png"
+                  alt="SylphCorps Media newsroom"
+                  width={1100}
+                  height={400}
+                  className="rounded-lg shadow-lg"
+                />
+              </div>
+              <div className="grid md:grid-cols-3 gap-8 mt-4">
                 <div className="text-center">
                   <h3 className="text-lg font-semibold text-black dark:text-white mb-3">AI-Powered Reporting</h3>
                   <p className="text-gray-600 dark:text-gray-400">
@@ -82,7 +91,16 @@ async function AboutPageContent() {
 
             <div className="mb-12">
               <h2 className="text-2xl font-bold font-serif text-black dark:text-white mb-6">Our Values</h2>
-              <div className="grid md:grid-cols-2 gap-8">
+              <div>
+                <Image
+                  src="/images/scm-values-tag-img.png"
+                  alt="SylphCorps Media newsroom"
+                  width={1100}
+                  height={400}
+                  className="rounded-lg shadow-lg"
+                />
+              </div>
+              <div className="grid md:grid-cols-2 gap-8 mt-8">
                 <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-black dark:text-white mb-3">Innovation & Accuracy</h3>
                   <p className="text-gray-600 dark:text-gray-400">
@@ -116,7 +134,16 @@ async function AboutPageContent() {
 
             <div className="mb-12">
               <h2 className="text-2xl font-bold font-serif text-black dark:text-white mb-6">Leadership Team</h2>
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
+              <div>
+                <Image
+                  src="/images/scm-leadership-tag-img.png"
+                  alt="SylphCorps Media newsroom"
+                  width={1100}
+                  height={400}
+                  className="rounded-lg shadow-lg"
+                />
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 mb-6 mt-4">
                 SylphCorps Media is led by a diverse team of journalism veterans, technology innovators, and digital
                 media pioneers who share a vision for the future of news.
               </p>

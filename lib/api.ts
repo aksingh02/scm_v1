@@ -46,7 +46,11 @@ export interface ApiResponse {
   empty: boolean
 }
 
-const API_BASE_URL = "http://localhost:8085/api"
+//local development URL
+// const API_BASE_URL = "http://localhost:8081/api"
+
+//production-ready URL
+const API_BASE_URL = "https://media-api.sylphcorps.com/api"
 
 // Fetch articles with pagination
 export async function fetchArticles(
@@ -64,6 +68,7 @@ export async function fetchArticles(
         },
       },
     )
+    console.log("Response:", response)
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)

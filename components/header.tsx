@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { MobileNav } from "./mobile-nav"
 import { ThemeToggle } from "./theme-toggle"
 
@@ -46,11 +47,20 @@ export function Header({ navigationItems = [] }: HeaderProps) {
       </div>
 
       {/* Main Header */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center">
             <MobileNav navigationItems={["Home", ...navigationItems]} />
-            <div className="text-center">
+            <div>
+                <Image
+                  src="/images/logo/scm.png"
+                  alt="SylphCorps Media newsroom"
+                  width={70}
+                  height={70}
+                  className="rounded-lg shadow-lg"
+                />
+              </div>
+            <div className="ml-3 text-center d-flex">
               <Link href="/" className="text-2xl md:text-3xl font-bold font-serif text-black dark:text-white block">
                 SylphCorps Media
               </Link>
@@ -78,12 +88,6 @@ export function Header({ navigationItems = [] }: HeaderProps) {
                 <Search className="h-4 w-4" />
               </Button>
             </form>
-            <Link href="/subscribe">
-              <Button className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 text-sm px-4 py-2">
-                <span className="hidden sm:block">Subscribe</span>
-                <span className="sm:hidden">Sub</span>
-              </Button>
-            </Link>
           </div>
         </div>
       </div>
