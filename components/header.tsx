@@ -49,9 +49,11 @@ export function Header({ navigationItems = [] }: HeaderProps) {
       {/* Main Header */}
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
+
           <div className="flex items-center">
             <MobileNav navigationItems={["Home", ...navigationItems]} />
-            <div>
+
+            <Link href="/" className="flex items-center">
               <Image
                 src="/images/logo/scm.png"
                 alt="SylphCorps Media newsroom"
@@ -62,15 +64,15 @@ export function Header({ navigationItems = [] }: HeaderProps) {
                 priority
                 loading="eager"
               />
-            </div>
-            <div className="ml-3 text-center d-flex">
-              <Link href="/" className="text-2xl md:text-3xl font-bold font-serif text-black dark:text-white block">
-                SylphCorps Media
-              </Link>
-              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 italic mt-1">
-                Innovating Tomorrow's News Today
-              </p>
-            </div>
+              <div className="ml-3 text-center">
+                <span className="text-2xl md:text-3xl font-bold font-serif text-black dark:text-white block">
+                  SylphCorps Media
+                </span>
+                <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 italic mt-1">
+                  Innovating Tomorrow's News Today
+                </p>
+              </div>
+            </Link>
           </div>
 
           <div className="flex items-center space-x-4">

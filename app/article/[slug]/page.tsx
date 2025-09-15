@@ -144,6 +144,34 @@ async function ArticlePageContent({ params }: ArticlePageProps) {
       </article>
 
       <Footer />
+
+      {/* JSON-LD Structured Data for Article */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "NewsArticle",
+            headline: article.title,
+            image: [article.image],
+            datePublished: article.publishedAt,
+            dateModified: article.publishedAt,
+            author: {
+              "@type": "Person",
+              name: article.author.name,
+            },
+            publisher: {
+              "@type": "NewsMediaOrganization",
+              name: "SylphCorps Media",
+              logo: {
+                "@type": "ImageObject",
+                url: "https://media.sylphcorps.com/images/logo/scm.png",
+              },
+            },
+            description: article.summary,
+          }),
+        }}
+      />
     </div>
   )
 }

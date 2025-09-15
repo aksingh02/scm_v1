@@ -1,3 +1,7 @@
+const API_BASE_URL = "http://3.6.147.222:8085/api"
+const API_TIMEOUT = 10000 // 10s timeout
+
+// ---- Types ----
 export interface ApiArticle {
   id: number
   title: string
@@ -20,11 +24,7 @@ export interface ApiArticle {
 export interface ApiResponse {
   content: ApiArticle[]
   pageable: {
-    sort: {
-      empty: boolean
-      sorted: boolean
-      unsorted: boolean
-    }
+    sort: { empty: boolean; sorted: boolean; unsorted: boolean }
     offset: number
     pageSize: number
     pageNumber: number
@@ -36,95 +36,65 @@ export interface ApiResponse {
   totalPages: number
   number: number
   size: number
-  sort: {
-    empty: boolean
-    sorted: boolean
-    unsorted: boolean
-  }
+  sort: { empty: boolean; sorted: boolean; unsorted: boolean }
   first: boolean
   numberOfElements: number
   empty: boolean
 }
 
-//local development URL
-// const API_BASE_URL = "http://localhost:8081/api"
+// ---- LRU Cache ----
+class LRUCache<T> {
+  private cache = new Map<string, { value: T; timestamp: number }>()
+  constructor(private maxSize = 100, private ttl = 300000) {} // 5 min
 
-//production-ready URL
-const API_BASE_URL = "https://media-api.sylphcorps.com/api"
-
-// Cache for API responses
-const cache = new Map<string, { data: any; timestamp: number }>()
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-
-function getCachedData(key: string) {
-  const cached = cache.get(key)
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data
-  }
-  return null
-}
-
-function setCachedData(key: string, data: any) {
-  cache.set(key, { data, timestamp: Date.now() })
-}
-
-// Fetch articles with pagination
-export async function fetchArticles(
-  page = 0,
-  size = 20,
-  sortBy = "publishedAt",
-  sortDir = "desc",
-): Promise<ApiResponse> {
-  const cacheKey = `articles-${page}-${size}-${sortBy}-${sortDir}`
-  const cached = getCachedData(cacheKey)
-  if (cached) return cached
-
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-
-    const response = await fetch(
-      `${API_BASE_URL}/articles/public?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal: controller.signal,
-        next: { revalidate: 300 }, // Cache for 5 minutes
-      },
-    )
-
-    clearTimeout(timeoutId)
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+  get(key: string): T | null {
+    const item = this.cache.get(key)
+    if (!item) return null
+    if (Date.now() - item.timestamp > this.ttl) {
+      this.cache.delete(key)
+      return null
     }
+    this.cache.delete(key)
+    this.cache.set(key, item)
+    return item.value
+  }
 
-    const data = await response.json()
-    setCachedData(cacheKey, data)
-    return data
-  } catch (error) {
-    console.error("Error fetching articles:", error)
-    throw error
+  set(key: string, value: T): void {
+    if (this.cache.size >= this.maxSize) {
+      const firstKey = this.cache.keys().next().value
+      if (firstKey) this.cache.delete(firstKey)
+    }
+    this.cache.set(key, { value, timestamp: Date.now() })
+  }
+
+  clear() {
+    this.cache.clear()
   }
 }
 
-// Fetch categories
-export async function fetchCategories(): Promise<string[]> {
-  const cacheKey = "categories"
-  const cached = getCachedData(cacheKey)
+const apiCache = new LRUCache<any>(50, 300000) // 50 items, 5 min TTL
+
+// ---- Fetch with timeout & caching ----
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {}
+): Promise<any> {
+  const cacheKey = `${url}_${JSON.stringify(options)}`
+  const cached = apiCache.get(cacheKey)
   if (cached) return cached
 
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 5000)
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT)
 
-    const response = await fetch(`${API_BASE_URL}/articles/categories`, {
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
+        ...options.headers,
       },
-      signal: controller.signal,
-      next: { revalidate: 600 }, // Cache for 10 minutes
     })
 
     clearTimeout(timeoutId)
@@ -134,81 +104,125 @@ export async function fetchCategories(): Promise<string[]> {
     }
 
     const data = await response.json()
-    setCachedData(cacheKey, data)
+    apiCache.set(cacheKey, data)
     return data
   } catch (error) {
-    console.error("Error fetching categories:", error)
+    clearTimeout(timeoutId)
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Request timeout")
+    }
     throw error
   }
 }
 
-// Fetch article by slug
-export async function fetchArticleBySlug(slug: string): Promise<ApiArticle | null> {
-  const cacheKey = `article-${slug}`
-  const cached = getCachedData(cacheKey)
-  if (cached) return cached
+// ---- API Calls ----
 
+// Articles (public)
+export async function fetchArticles(
+  page = 0,
+  size = 20,
+  sortBy = "publishedAt",
+  sortDir = "desc"
+): Promise<ApiResponse> {
   try {
-    const response = await fetchArticles(0, 100) // Get more articles to find by slug
-    const article = response.content.find((article) => article.slug === slug)
-    const result = article || null
-    setCachedData(cacheKey, result)
-    return result
+    const url = `${API_BASE_URL}/articles/public?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
+    return await fetchWithTimeout(url)
   } catch (error) {
-    console.error("Error fetching article by slug:", error)
+    console.error("Error fetching articles:", error)
+    return {
+      content: [],
+      pageable: {
+        sort: { empty: true, sorted: false, unsorted: true },
+        offset: 0,
+        pageSize: size,
+        pageNumber: page,
+        unpaged: false,
+        paged: true,
+      },
+      last: true,
+      totalElements: 0,
+      totalPages: 0,
+      number: page,
+      size,
+      sort: { empty: true, sorted: false, unsorted: true },
+      first: true,
+      numberOfElements: 0,
+      empty: true,
+    }
+  }
+}
+
+// Categories
+export async function fetchCategories(): Promise<string[]> {
+  try {
+    const url = `${API_BASE_URL}/articles/categories`
+    const data = await fetchWithTimeout(url)
+    return Array.isArray(data)
+      ? data
+      : ["Technology", "Business", "Health", "Science", "Sports", "Entertainment", "Politics", "World"]
+  } catch (error) {
+    console.error("Error fetching categories:", error)
+    return ["Technology", "Business", "Health", "Science", "Sports", "Entertainment", "Politics", "World"]
+  }
+}
+
+// Single article by slug
+export async function fetchArticleBySlug(slug: string): Promise<ApiArticle | null> {
+  try {
+    const articles = await fetchArticles(0, 100)
+    return articles.content.find((a) => a.slug === slug) || null
+  } catch (error) {
+    console.error(`Error fetching article by slug ${slug}:`, error)
     return null
   }
 }
 
-// Fetch articles by category
-export async function fetchArticlesByCategory(category: string, page = 0, size = 20): Promise<ApiResponse> {
-  const cacheKey = `category-${category}-${page}-${size}`
-  const cached = getCachedData(cacheKey)
-  if (cached) return cached
-
+// Articles by category (client-side filter)
+export async function fetchArticlesByCategory(
+  category: string,
+  page = 0,
+  size = 20
+): Promise<ApiResponse> {
   try {
-    // For now, fetch all articles and filter by category
-    // In a real implementation, the API should support category filtering
     const response = await fetchArticles(page, size)
-    const filteredContent = response.content.filter((article) =>
-      article.tags.some((tag) => tag.toLowerCase() === category.toLowerCase()),
+    const filtered = response.content.filter((a) =>
+      a.tags.some((tag) => tag.toLowerCase() === category.toLowerCase())
     )
-
-    const result = {
+    return {
       ...response,
-      content: filteredContent,
-      totalElements: filteredContent.length,
-      numberOfElements: filteredContent.length,
+      content: filtered,
+      totalElements: filtered.length,
+      numberOfElements: filtered.length,
     }
-
-    setCachedData(cacheKey, result)
-    return result
   } catch (error) {
     console.error("Error fetching articles by category:", error)
-    throw error
+    return {
+      ...await fetchArticles(page, size),
+      content: [],
+      totalElements: 0,
+      numberOfElements: 0,
+    }
   }
 }
 
-// Search articles
+// Search articles (client-side filter)
 export async function searchArticles(query: string): Promise<ApiArticle[]> {
-  const cacheKey = `search-${query}`
-  const cached = getCachedData(cacheKey)
-  if (cached) return cached
-
   try {
-    const response = await fetchArticles(0, 100) // Get more articles for search
-    const filteredArticles = response.content.filter(
-      (article) =>
-        article.title.toLowerCase().includes(query.toLowerCase()) ||
-        article.description.toLowerCase().includes(query.toLowerCase()) ||
-        article.content.toLowerCase().includes(query.toLowerCase()) ||
-        article.tags.some((tag) => tag.toLowerCase().includes(query.toLowerCase())),
+    const response = await fetchArticles(0, 100)
+    return response.content.filter(
+      (a) =>
+        a.title.toLowerCase().includes(query.toLowerCase()) ||
+        a.description.toLowerCase().includes(query.toLowerCase()) ||
+        a.content.toLowerCase().includes(query.toLowerCase()) ||
+        a.tags.some((t) => t.toLowerCase().includes(query.toLowerCase()))
     )
-
-    setCachedData(cacheKey, filteredArticles)
-    return filteredArticles
   } catch (error) {
     console.error("Error searching articles:", error)
     return []
   }
+}
+
+// ---- Utilities ----
+export function clearApiCache() {
+  apiCache.clear()
 }

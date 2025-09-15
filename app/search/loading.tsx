@@ -2,9 +2,9 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { getAllCategories } from "@/lib/data"
 
-export default function SearchLoading() {
-  const categories = getAllCategories()
-  const navigationItems = categories.map((category) => category.name)
+export default async function SearchLoading() {
+  const categories = await getAllCategories()
+  const navigationItems = categories.map((category: { name: any }) => category.name)
 
   return (
     <div className="min-h-screen bg-white">
