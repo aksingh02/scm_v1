@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://3.6.147.222:8085/api"
+const API_BASE_URL = "https://media-api.sylphcorps.com/api"
 const API_TIMEOUT = 10000 // 10s timeout
 
 // ---- Types ----
