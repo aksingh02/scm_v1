@@ -1,10 +1,13 @@
 import {
   fetchArticles,
+  fetchFeaturedArticles,
+  fetchCategoriesWithDetails,
   fetchCategories,
   fetchArticleBySlug,
   fetchArticlesByCategory,
   searchArticles,
   type ApiArticle,
+  type ApiCategory,
 } from "./api"
 
 export interface Article {
@@ -24,6 +27,9 @@ export interface Article {
   readTime: string
   tags: string[]
   featured: boolean
+  trending: boolean
+  viewCount: number
+  likeCount: number
 }
 
 export interface Category {
@@ -31,6 +37,9 @@ export interface Category {
   name: string
   description: string
   slug: string
+  color?: string
+  icon?: string | null
+  articleCount?: number
 }
 
 // Transform API article to our Article interface
@@ -39,19 +48,35 @@ function transformApiArticle(apiArticle: ApiArticle): Article {
     id: apiArticle.id.toString(),
     title: apiArticle.title,
     slug: apiArticle.slug,
-    summary: apiArticle.excerpt || apiArticle.description,
+    summary: apiArticle.excerpt,
     content: apiArticle.content,
     image: apiArticle.imageUrl,
-    category: apiArticle.tags[0] || "General", // Use first tag as category
+    category: apiArticle.categories[0]?.name || "General",
     author: {
-      name: "Staff Writer", // Default author since API doesn't provide this
-      bio: "Professional journalist",
+      name: apiArticle.author.fullName,
+      bio: apiArticle.author.bio,
       avatar: "/placeholder.svg?height=50&width=50",
     },
     publishedAt: apiArticle.publishedAt,
     readTime: calculateReadTime(apiArticle.content),
     tags: apiArticle.tags,
     featured: apiArticle.featured,
+    trending: apiArticle.trending,
+    viewCount: apiArticle.viewCount,
+    likeCount: apiArticle.likeCount,
+  }
+}
+
+// Transform API category to our Category interface
+function transformApiCategory(apiCategory: ApiCategory): Category {
+  return {
+    id: apiCategory.id.toString(),
+    name: apiCategory.name,
+    description: apiCategory.description,
+    slug: apiCategory.slug,
+    color: apiCategory.color,
+    icon: apiCategory.icon,
+    articleCount: apiCategory.articleCount,
   }
 }
 
@@ -63,8 +88,8 @@ function calculateReadTime(content: string): string {
   return `${minutes} min read`
 }
 
-// Transform categories array to Category objects
-function transformCategories(categories: string[]): Category[] {
+// Transform simple categories array to Category objects
+function transformSimpleCategories(categories: string[]): Category[] {
   return categories.map((category, index) => ({
     id: (index + 1).toString(),
     name: category,
@@ -104,19 +129,19 @@ export async function getAllArticles(
   }
 }
 
-// Get featured article
+// Get featured article (first from featured articles)
 export async function getFeaturedArticle(): Promise<Article | null> {
   try {
-    const response = await fetchArticles(0, 50) // Get first 50 articles to find featured
-    const featuredApiArticle = response.content.find((article) => article.featured)
+    const response = await fetchFeaturedArticles()
 
-    if (featuredApiArticle) {
-      return transformApiArticle(featuredApiArticle)
-    }
-
-    // If no featured article, return the first one
     if (response.content.length > 0) {
       return transformApiArticle(response.content[0])
+    }
+
+    // Fallback to first article from regular articles
+    const regularResponse = await fetchArticles(0, 1)
+    if (regularResponse.content.length > 0) {
+      return transformApiArticle(regularResponse.content[0])
     }
 
     return null
@@ -126,12 +151,18 @@ export async function getFeaturedArticle(): Promise<Article | null> {
   }
 }
 
-// Get recent articles (excluding featured)
+// Get recent articles (excluding featured ones)
 export async function getRecentArticles(limit = 6): Promise<Article[]> {
   try {
-    const response = await fetchArticles(0, limit + 10) // Get extra to filter out featured
-    const articles = response.content
-      .filter((article) => !article.featured)
+    const [articlesResponse, featuredResponse] = await Promise.all([
+      fetchArticles(0, limit + 10),
+      fetchFeaturedArticles(),
+    ])
+
+    const featuredIds = new Set(featuredResponse.content.map((article) => article.id))
+
+    const articles = articlesResponse.content
+      .filter((article) => !featuredIds.has(article.id))
       .slice(0, limit)
       .map(transformApiArticle)
 
@@ -153,7 +184,7 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
   }
 }
 
-// Get articles by category
+// Get articles by category using proper category filtering
 export async function getArticlesByCategory(categorySlug: string, limit?: number): Promise<Article[]> {
   try {
     const response = await fetchArticlesByCategory(categorySlug, 0, limit || 50)
@@ -164,11 +195,18 @@ export async function getArticlesByCategory(categorySlug: string, limit?: number
   }
 }
 
-// Get all categories
+// Get all categories (try detailed first, fallback to simple)
 export async function getAllCategories(): Promise<Category[]> {
   try {
-    const categories = await fetchCategories()
-    return transformCategories(categories)
+    // Try to get detailed categories first
+    const detailedCategories = await fetchCategoriesWithDetails()
+    if (detailedCategories.length > 0) {
+      return detailedCategories.map(transformApiCategory)
+    }
+
+    // Fallback to simple categories
+    const simpleCategories = await fetchCategories()
+    return transformSimpleCategories(simpleCategories)
   } catch (error) {
     console.error("Error getting categories:", error)
     return []
@@ -186,34 +224,63 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
   }
 }
 
-// Search articles
+// Search articles using the dedicated search API
 export async function searchArticlesData(query: string): Promise<Article[]> {
   try {
-    const apiArticles = await searchArticles(query)
-    return apiArticles.map(transformApiArticle)
+    const response = await searchArticles(query, 0, 50)
+    return response.content.map(transformApiArticle)
   } catch (error) {
     console.error("Error searching articles:", error)
     return []
   }
 }
 
-// Get related articles
+// Get related articles based on categories and tags
 export async function getRelatedArticles(currentArticle: Article, limit = 3): Promise<Article[]> {
   try {
     const response = await fetchArticles(0, 50)
     const relatedArticles = response.content
-      .filter(
-        (article) =>
-          article.id.toString() !== currentArticle.id &&
-          (article.tags.some((tag) => currentArticle.tags.includes(tag)) ||
-            article.tags.includes(currentArticle.category)),
-      )
+      .filter((article) => {
+        if (article.id.toString() === currentArticle.id) return false
+
+        // Check if articles share categories or tags
+        const hasSharedCategory = article.categories.some((cat) => cat.name === currentArticle.category)
+        const hasSharedTags = article.tags.some((tag) => currentArticle.tags.includes(tag))
+
+        return hasSharedCategory || hasSharedTags
+      })
       .slice(0, limit)
       .map(transformApiArticle)
 
     return relatedArticles
   } catch (error) {
     console.error("Error getting related articles:", error)
+    return []
+  }
+}
+
+// Get trending articles
+export async function getTrendingArticles(limit = 5): Promise<Article[]> {
+  try {
+    const response = await fetchArticles(0, limit * 2)
+    const trendingArticles = response.content
+      .filter((article) => article.trending)
+      .slice(0, limit)
+      .map(transformApiArticle)
+
+    // If not enough trending articles, fill with recent ones
+    if (trendingArticles.length < limit) {
+      const recentArticles = response.content
+        .filter((article) => !article.trending)
+        .slice(0, limit - trendingArticles.length)
+        .map(transformApiArticle)
+
+      return [...trendingArticles, ...recentArticles]
+    }
+
+    return trendingArticles
+  } catch (error) {
+    console.error("Error getting trending articles:", error)
     return []
   }
 }
@@ -236,7 +303,7 @@ export function formatDate(dateString: string): string {
   }
 }
 
-// Calculate time ago - ADDED MISSING EXPORT
+// Calculate time ago
 export function getTimeAgo(dateString: string): string {
   try {
     const date = new Date(dateString)
@@ -277,64 +344,5 @@ export function formatNumber(num: number | undefined | null): string {
   } catch (error) {
     console.error("Error formatting number:", error)
     return "0"
-  }
-}
-
-// Get trending articles
-export async function getTrendingArticles(limit = 5): Promise<Article[]> {
-  try {
-    const response = await fetchArticles(0, limit * 2)
-    // Sort by a combination of recent date and featured status
-    const sortedArticles = response.content
-      .sort((a, b) => {
-        const dateA = new Date(a.publishedAt).getTime()
-        const dateB = new Date(b.publishedAt).getTime()
-
-        // Prioritize featured articles and recent articles
-        if (a.featured && !b.featured) return -1
-        if (!a.featured && b.featured) return 1
-
-        return dateB - dateA // Most recent first
-      })
-      .slice(0, limit)
-      .map(transformApiArticle)
-
-    return sortedArticles
-  } catch (error) {
-    console.error("Error getting trending articles:", error)
-    return []
-  }
-}
-
-// Get articles by multiple tags
-export async function getArticlesByTags(tags: string[], limit = 10): Promise<Article[]> {
-  try {
-    const response = await fetchArticles(0, 100)
-    const filteredArticles = response.content
-      .filter((article) =>
-        tags.some((tag) => article.tags.some((articleTag) => articleTag.toLowerCase().includes(tag.toLowerCase()))),
-      )
-      .slice(0, limit)
-      .map(transformApiArticle)
-
-    return filteredArticles
-  } catch (error) {
-    console.error("Error getting articles by tags:", error)
-    return []
-  }
-}
-
-// Get popular articles (mock implementation based on recent articles)
-export async function getPopularArticles(limit = 5): Promise<Article[]> {
-  try {
-    const response = await fetchArticles(0, limit * 2)
-    // For now, just return recent articles as "popular"
-    // In a real implementation, this would be based on view counts, likes, etc.
-    const popularArticles = response.content.slice(0, limit).map(transformApiArticle)
-
-    return popularArticles
-  } catch (error) {
-    console.error("Error getting popular articles:", error)
-    return []
   }
 }

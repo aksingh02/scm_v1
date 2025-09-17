@@ -1,27 +1,56 @@
 import { env } from "./env"
+
 // ---- Config ----
 const API_BASE_URL = env.baseUrl
 const API_TIMEOUT = env.apiTimeOut
 const API_KEY = env.apiKey
 
-// ---- Types ----
+// ---- Updated Types to match backend API ----
+export interface ApiAuthor {
+  id: number
+  username: string
+  email: string
+  fullName: string
+  bio: string
+  role: string
+  createdAt: string
+  updatedAt: string
+  active: boolean
+}
+
+export interface ApiCategory {
+  id: number
+  name: string
+  description: string
+  slug: string
+  color: string
+  icon: string | null
+  articleCount: number
+  createdAt?: string
+  updatedAt?: string
+  active?: boolean
+}
+
 export interface ApiArticle {
   id: number
   title: string
-  description: string
   excerpt: string
   content: string
   slug: string
   imageUrl: string
+  status: string
   viewCount: number
   likeCount: number
   tags: string[]
+  author: ApiAuthor
+  categories: ApiCategory[]
   createdAt: string
   updatedAt: string
   publishedAt: string
-  trending: boolean
   featured: boolean
+  trending: boolean
   published: boolean
+  inEditorialWorkflow: boolean
 }
 
 export interface ApiResponse {
@@ -48,7 +77,10 @@ export interface ApiResponse {
 // ---- LRU Cache ----
 class LRUCache<T> {
   private cache = new Map<string, { value: T; timestamp: number }>()
-  constructor(private maxSize = 100, private ttl = 300000) {} // 5 min
+  constructor(
+    private maxSize = 100,
+    private ttl = 300000,
+  ) {} // 5 min
 
   get(key: string): T | null {
     const item = this.cache.get(key)
@@ -78,10 +110,7 @@ class LRUCache<T> {
 const apiCache = new LRUCache<any>(50, 300000) // 50 items, 5 min TTL
 
 // ---- Fetch with timeout & caching ----
-async function fetchWithTimeout(
-  url: string,
-  options: RequestInit = {}
-): Promise<any> {
+async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<any> {
   const cacheKey = `${url}_${JSON.stringify(options)}`
   const cached = apiCache.get(cacheKey)
   if (cached) return cached
@@ -96,7 +125,6 @@ async function fetchWithTimeout(
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        // 🔑 Always attach API key unless overridden
         "X-API-Key": API_KEY,
         ...options.headers,
       },
@@ -122,12 +150,12 @@ async function fetchWithTimeout(
 
 // ---- API Calls ----
 
-// Articles (public but now API key protected)
+// Get all articles with pagination
 export async function fetchArticles(
   page = 0,
   size = 20,
   sortBy = "publishedAt",
-  sortDir = "desc"
+  sortDir = "desc",
 ): Promise<ApiResponse> {
   try {
     const url = `${API_BASE_URL}/articles/public?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
@@ -157,21 +185,141 @@ export async function fetchArticles(
   }
 }
 
-// Categories
+// Get featured articles
+export async function fetchFeaturedArticles(): Promise<ApiResponse> {
+  try {
+    const url = `${API_BASE_URL}/articles/featured`
+    return await fetchWithTimeout(url)
+  } catch (error) {
+    console.error("Error fetching featured articles:", error)
+    return {
+      content: [],
+      pageable: {
+        sort: { empty: true, sorted: false, unsorted: true },
+        offset: 0,
+        pageSize: 10,
+        pageNumber: 0,
+        unpaged: false,
+        paged: true,
+      },
+      last: true,
+      totalElements: 0,
+      totalPages: 0,
+      number: 0,
+      size: 10,
+      sort: { empty: true, sorted: false, unsorted: true },
+      first: true,
+      numberOfElements: 0,
+      empty: true,
+    }
+  }
+}
+
+// Get categories with full details
+export async function fetchCategoriesWithDetails(): Promise<ApiCategory[]> {
+  try {
+    const url = `${API_BASE_URL}/articles/category`
+    const data = await fetchWithTimeout(url)
+    return Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error("Error fetching categories with details:", error)
+    return []
+  }
+}
+
+// Get simple category names (fallback)
 export async function fetchCategories(): Promise<string[]> {
   try {
     const url = `${API_BASE_URL}/articles/categories`
     const data = await fetchWithTimeout(url)
-    return Array.isArray(data)
-      ? data
-      : ["Technology", "Business", "Health", "Science", "Sports", "Entertainment", "Politics", "World"]
+    return Array.isArray(data) ? data : []
   } catch (error) {
     console.error("Error fetching categories:", error)
-    return ["Technology", "Business", "Health", "Science", "Sports", "Entertainment", "Politics", "World"]
+    return []
   }
 }
 
-// Single article by slug
+// Search articles using the dedicated search endpoint
+export async function searchArticles(query: string, page = 0, size = 20): Promise<ApiResponse> {
+  try {
+    const url = `${API_BASE_URL}/articles/search?q=${encodeURIComponent(query)}&page=${page}&size=${size}`
+    return await fetchWithTimeout(url)
+  } catch (error) {
+    console.error("Error searching articles:", error)
+    return {
+      content: [],
+      pageable: {
+        sort: { empty: true, sorted: false, unsorted: true },
+        offset: 0,
+        pageSize: size,
+        pageNumber: page,
+        unpaged: false,
+        paged: true,
+      },
+      last: true,
+      totalElements: 0,
+      totalPages: 0,
+      number: page,
+      size,
+      sort: { empty: true, sorted: false, unsorted: true },
+      first: true,
+      numberOfElements: 0,
+      empty: true,
+    }
+  }
+}
+
+// Get articles by category slug - filter from all articles
+export async function fetchArticlesByCategory(categorySlug: string, page = 0, size = 20): Promise<ApiResponse> {
+  try {
+    // Get all articles and filter by category
+    const response = await fetchArticles(0, 100) // Get more articles to filter
+    const filtered = response.content.filter((article) =>
+      article.categories.some((category) => category.slug === categorySlug),
+    )
+
+    // Apply pagination to filtered results
+    const startIndex = page * size
+    const endIndex = startIndex + size
+    const paginatedFiltered = filtered.slice(startIndex, endIndex)
+
+    return {
+      ...response,
+      content: paginatedFiltered,
+      totalElements: filtered.length,
+      numberOfElements: paginatedFiltered.length,
+      totalPages: Math.ceil(filtered.length / size),
+      last: endIndex >= filtered.length,
+      first: page === 0,
+      number: page,
+      size,
+    }
+  } catch (error) {
+    console.error("Error fetching articles by category:", error)
+    return {
+      content: [],
+      pageable: {
+        sort: { empty: true, sorted: false, unsorted: true },
+        offset: 0,
+        pageSize: size,
+        pageNumber: page,
+        unpaged: false,
+        paged: true,
+      },
+      last: true,
+      totalElements: 0,
+      totalPages: 0,
+      number: page,
+      size,
+      sort: { empty: true, sorted: false, unsorted: true },
+      first: true,
+      numberOfElements: 0,
+      empty: true,
+    }
+  }
+}
+
+// Get single article by slug
 export async function fetchArticleBySlug(slug: string): Promise<ApiArticle | null> {
   try {
     const articles = await fetchArticles(0, 100)
@@ -179,51 +327,6 @@ export async function fetchArticleBySlug(slug: string): Promise<ApiArticle | nul
   } catch (error) {
     console.error(`Error fetching article by slug ${slug}:`, error)
     return null
-  }
-}
-
-// Articles by category (client-side filter)
-export async function fetchArticlesByCategory(
-  category: string,
-  page = 0,
-  size = 20
-): Promise<ApiResponse> {
-  try {
-    const response = await fetchArticles(page, size)
-    const filtered = response.content.filter((a) =>
-      a.tags.some((tag) => tag.toLowerCase() === category.toLowerCase())
-    )
-    return {
-      ...response,
-      content: filtered,
-      totalElements: filtered.length,
-      numberOfElements: filtered.length,
-    }
-  } catch (error) {
-    console.error("Error fetching articles by category:", error)
-    return {
-      ...await fetchArticles(page, size),
-      content: [],
-      totalElements: 0,
-      numberOfElements: 0,
-    }
-  }
-}
-
-// Search articles (client-side filter)
-export async function searchArticles(query: string): Promise<ApiArticle[]> {
-  try {
-    const response = await fetchArticles(0, 100)
-    return response.content.filter(
-      (a) =>
-        a.title.toLowerCase().includes(query.toLowerCase()) ||
-        a.description.toLowerCase().includes(query.toLowerCase()) ||
-        a.content.toLowerCase().includes(query.toLowerCase()) ||
-        a.tags.some((t) => t.toLowerCase().includes(query.toLowerCase()))
-    )
-  } catch (error) {
-    console.error("Error searching articles:", error)
-    return []
   }
 }
 

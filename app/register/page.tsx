@@ -1,12 +1,13 @@
+import { Suspense } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { getAllCategories } from "@/lib/data"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { getAllCategories } from "@/lib/data"
 import Link from "next/link"
-import { Suspense } from "react"
-import { PageSkeleton } from "@/components/loading/page-skeleton"
+import { ArrowLeft, User, Mail, Lock, Eye, EyeOff } from "lucide-react"
 
 async function RegisterPageContent() {
   const categories = await getAllCategories()
@@ -16,144 +17,160 @@ async function RegisterPageContent() {
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
       <Header navigationItems={navigationItems} />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-md mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-700">
-            <header className="mb-8 text-center">
-              <h1 className="text-3xl font-bold font-serif text-black dark:text-white mb-2">Create Account</h1>
-              <p className="text-gray-600 dark:text-gray-400">Join SylphCorps Media today</p>
-            </header>
+      <main className="max-w-md mx-auto px-4 py-16">
+        <div className="mb-6">
+          <Link
+            href="/login"
+            className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Login
+          </Link>
+        </div>
 
-            <form className="space-y-6">
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
+            <CardDescription className="text-center">
+              Join SylphCorps Media to stay updated with the latest news
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <form className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="firstName"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
+                <div className="space-y-2">
+                  <label htmlFor="firstName" className="text-sm font-medium">
                     First Name
                   </label>
-                  <Input
-                    id="firstName"
-                    type="text"
-                    required
-                    className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                    placeholder="Enter your first name"
-                  />
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input id="firstName" name="firstName" type="text" placeholder="John" className="pl-10" required />
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="space-y-2">
+                  <label htmlFor="lastName" className="text-sm font-medium">
                     Last Name
                   </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input id="lastName" name="lastName" type="text" placeholder="Doe" className="pl-10" required />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    id="lastName"
-                    type="text"
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="john.doe@example.com"
+                    className="pl-10"
                     required
-                    className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                    placeholder="Enter your last name"
                   />
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email Address
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                  placeholder="Enter your email"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium">
                   Password
                 </label>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                  placeholder="Create a password"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Must be at least 8 characters with uppercase, lowercase, and numbers
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Create a strong password"
+                    className="pl-10 pr-10"
+                    required
+                  />
+                  <button type="button" className="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                    <Eye className="h-4 w-4" />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Password must be at least 8 characters with uppercase, lowercase, and numbers
                 </p>
               </div>
 
-              <div>
-                <label
-                  htmlFor="confirmPassword"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                >
+              <div className="space-y-2">
+                <label htmlFor="confirmPassword" className="text-sm font-medium">
                   Confirm Password
                 </label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  required
-                  className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                  placeholder="Confirm your password"
-                />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="Confirm your password"
+                    className="pl-10 pr-10"
+                    required
+                  />
+                  <button type="button" className="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                    <EyeOff className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-start">
-                <input
-                  type="checkbox"
-                  id="terms"
-                  required
-                  className="rounded border-gray-300 dark:border-gray-600 text-black focus:ring-black dark:focus:ring-white mt-1"
-                />
-                <label htmlFor="terms" className="ml-2 text-sm text-gray-600 dark:text-gray-400">
-                  I agree to the{" "}
-                  <Link href="/terms" className="text-black dark:text-white hover:underline">
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link href="/privacy" className="text-black dark:text-white hover:underline">
-                    Privacy Policy
-                  </Link>
+              <div className="space-y-3">
+                <label className="flex items-start space-x-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    required
+                  />
+                  <span className="text-gray-600 dark:text-gray-400">
+                    I agree to the{" "}
+                    <Link href="/terms" className="text-blue-600 hover:underline">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" className="text-blue-600 hover:underline">
+                      Privacy Policy
+                    </Link>
+                  </span>
+                </label>
+
+                <label className="flex items-start space-x-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Subscribe to our newsletter for the latest news updates
+                  </span>
                 </label>
               </div>
 
-              <div className="flex items-start">
-                <input
-                  type="checkbox"
-                  id="newsletter"
-                  className="rounded border-gray-300 dark:border-gray-600 text-black focus:ring-black dark:focus:ring-white mt-1"
-                />
-                <label htmlFor="newsletter" className="ml-2 text-sm text-gray-600 dark:text-gray-400">
-                  Subscribe to our newsletter for the latest news and updates
-                </label>
-              </div>
-
-              <Button className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200">
+              <Button type="submit" className="w-full">
                 Create Account
               </Button>
             </form>
 
-            <div className="mt-6">
-              <Separator className="my-4" />
-              <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+            <Separator />
+
+            <div className="text-center space-y-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Already have an account?{" "}
-                <Link href="/login" className="text-black dark:text-white hover:underline font-medium">
+                <Link href="/login" className="text-blue-600 hover:underline font-medium">
                   Sign in here
                 </Link>
               </p>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="mt-8 text-center">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">Ready to stay informed?</p>
-            <Link href="/subscribe">
-              <Button variant="outline" className="border-gray-300 dark:border-gray-600 bg-transparent">
-                Explore Subscription Plans
-              </Button>
-            </Link>
-          </div>
+        <div className="mt-8 text-center">
+          <p className="text-xs text-gray-500">
+            By creating an account, you agree to receive news updates and promotional content from SylphCorps Media. You
+            can unsubscribe at any time.
+          </p>
         </div>
       </main>
 
@@ -164,7 +181,7 @@ async function RegisterPageContent() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<div>Loading...</div>}>
       <RegisterPageContent />
     </Suspense>
   )
