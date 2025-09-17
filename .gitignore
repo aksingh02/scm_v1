@@ -27,4 +27,4 @@ yarn-error.log*
 next-env.d.ts
 
 # local env config
-lib/env.ts
+# lib/env.ts
