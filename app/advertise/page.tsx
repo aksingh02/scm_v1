@@ -206,8 +206,8 @@ async function AdvertisePageContent() {
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold text-black dark:text-white mb-2">Contact Information</h3>
-                    <p className="text-gray-600 dark:text-gray-400">Email: advertising@sylphcorps.media</p>
-                    <p className="text-gray-600 dark:text-gray-400">Phone: +91 11 4567-8903</p>
+                    <p className="text-gray-600 dark:text-gray-400">Email: business@sylphcorpsmedia.com</p>
+                    <p className="text-gray-600 dark:text-gray-400">Phone: +91 7042954064</p>
                   </div>
                   <div>
                     <h3 className="font-semibold text-black dark:text-white mb-2">Business Hours</h3>

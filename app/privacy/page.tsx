@@ -211,13 +211,13 @@ async function PrivacyPageContent() {
                 </p>
                 <div className="space-y-2 text-gray-700 dark:text-gray-300">
                   <p>
-                    <strong>Email:</strong> privacy@sylphcorps.media
+                    <strong>Email:</strong> admin@sylphcorps.media
                   </p>
                   <p>
-                    <strong>Phone:</strong> +1 (555) 123-PRIV
+                    <strong>Phone:</strong> +91 7042954064
                   </p>
                   <p>
-                    <strong>Mail:</strong> SylphCorps Media Privacy Office, 123 Innovation Drive, Tech City, TC 12345
+                    <strong>Mail:</strong> SylphCorps Media, Block A, Krishna Nagar, New Delhi, Delhi 110051, India
                   </p>
                   <p>
                     <strong>Response Time:</strong> We respond to privacy requests within 30 days

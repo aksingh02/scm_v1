@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import Script from "next/script"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,20 +19,19 @@ export const metadata: Metadata = {
   },
   description:
     "Get the latest global news, insights, and analysis from SylphCorps Media. Covering technology, business, politics, health, and more.",
-  generator: "v0.dev",
-  metadataBase: new URL("https://media.sylphcorps.com"),
+  metadataBase: new URL("https://sylphcorpsmedia.com"),
   alternates: {
-    canonical: "https://media.sylphcorps.com",
+    canonical: "https://sylphcorpsmedia.com",
   },
   openGraph: {
     type: "website",
-    url: "https://media.sylphcorps.com",
+    url: "https://sylphcorpsmedia.com",
     title: "SylphCorps Media - Latest News & Insights",
     description:
       "Stay informed with global news from SylphCorps Media. Covering technology, business, politics, health, science, and more.",
     images: [
       {
-        url: "https://media.sylphcorps.com/images/og-image.jpg",
+        url: "https://scm-s3-image-bucket.s3.ap-south-1.amazonaws.com/scm-about/scm-values-tag-img.png",
         width: 1200,
         height: 630,
         alt: "SylphCorps Media - News and Insights",
@@ -44,10 +44,10 @@ export const metadata: Metadata = {
     title: "SylphCorps Media - Latest News & Insights",
     description:
       "Latest global news & insights from SylphCorps Media. Covering technology, politics, health, and more.",
-    images: ["https://media.sylphcorps.com/images/og-image.jpg"],
+    images: ["https://scm-s3-image-bucket.s3.ap-south-1.amazonaws.com/scm-about/scm-values-tag-img.png"],
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: "/images/logo/scm.png",
   },
   robots: {
     index: true,
@@ -71,7 +71,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://scm-s3-image-bucket.s3.ap-south-1.amazonaws.com" />
-        <link rel="dns-prefetch" href="https://media-api.sylphcorps.com" />
+        <link rel="dns-prefetch" href="https://api.sylphcorpsmedia.com" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -79,18 +79,37 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "NewsMediaOrganization",
               name: "SylphCorps Media",
-              url: "https://media.sylphcorps.com",
-              logo: "https://media.sylphcorps.com/images/logo/scm.png",
+              url: "https://sylphcorpsmedia.com",
+              logo: "https://sylphcorpsmedia.com/images/logo/scm.png",
               sameAs: [
-                "https://twitter.com/sylphcorps",
-                "https://www.linkedin.com/company/sylphcorps"
+                "https://x.com/sylphcorpsmedia",
+                "https://www.linkedin.com/company/sylphcorpsmedia"
               ],
             }),
           }}
         />
+
+        {/* ✅ Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-GKP2RH52PT"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-GKP2RH52PT');
+          `}
+        </Script>
       </head>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           {children}
           <Toaster />
         </ThemeProvider>

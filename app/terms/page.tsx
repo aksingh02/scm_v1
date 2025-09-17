@@ -234,14 +234,13 @@ async function TermsPageContent() {
                 </p>
                 <div className="space-y-2 text-gray-700 dark:text-gray-300">
                   <p>
-                    <strong>Email:</strong> legal@sylphcorps.media
+                    <strong>Email:</strong> admin@sylphcorps.media
                   </p>
                   <p>
-                    <strong>Phone:</strong> +1 (555) 123-LEGAL
+                    <strong>Phone:</strong> +91 7042954064
                   </p>
                   <p>
-                    <strong>Address:</strong> SylphCorps Media Legal Department, 123 Innovation Drive, Tech City, TC
-                    12345
+                    <strong>Address:</strong> SylphCorps Media, Block A, Krishna Nagar, New Delhi, Delhi 110051, India
                   </p>
                 </div>
               </div>

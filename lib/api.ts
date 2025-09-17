@@ -1,5 +1,8 @@
-const API_BASE_URL = "https://api.sylphcorpsmedia.com/api"
-const API_TIMEOUT = 10000 // 10s timeout
+import { env } from "./env"
+// ---- Config ----
+const API_BASE_URL = env.baseUrl
+const API_TIMEOUT = env.apiTimeOut
+const API_KEY = env.apiKey
 
 // ---- Types ----
 export interface ApiArticle {
@@ -93,6 +96,8 @@ async function fetchWithTimeout(
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        // 🔑 Always attach API key unless overridden
+        "X-API-Key": API_KEY,
         ...options.headers,
       },
     })
@@ -117,7 +122,7 @@ async function fetchWithTimeout(
 
 // ---- API Calls ----
 
-// Articles (public)
+// Articles (public but now API key protected)
 export async function fetchArticles(
   page = 0,
   size = 20,

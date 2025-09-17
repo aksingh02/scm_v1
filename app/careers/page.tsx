@@ -204,7 +204,7 @@ async function CareersPageContent() {
             <Button className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200">
               Send Your Resume
             </Button>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">Email us at careers@sylphcorps.media</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">Email us at careers@sylphcorpsmedia.com</p>
           </section>
         </div>
       </main>

@@ -31,7 +31,7 @@ async function AboutPageContent() {
             <div className="grid md:grid-cols-2 gap-12 items-center mb-12">
               <div>
                 <Image
-                  src="/images/scm-mission.png"
+                  src="https://scm-s3-image-bucket.s3.ap-south-1.amazonaws.com/scm-about/scm-mission.jpeg"
                   alt="SylphCorps Media newsroom"
                   width={600}
                   height={400}
@@ -57,7 +57,7 @@ async function AboutPageContent() {
               <h2 className="text-2xl font-bold font-serif text-black dark:text-white mb-6">Our Innovation</h2>
               <div>
                 <Image
-                  src="/images/scm-innovation-tag-img.png"
+                  src="https://scm-s3-image-bucket.s3.ap-south-1.amazonaws.com/scm-about/scm-innovation-tag.jpeg"
                   alt="SylphCorps Media newsroom"
                   width={1100}
                   height={400}
@@ -93,7 +93,7 @@ async function AboutPageContent() {
               <h2 className="text-2xl font-bold font-serif text-black dark:text-white mb-6">Our Values</h2>
               <div>
                 <Image
-                  src="/images/scm-values-tag-img.png"
+                  src="https://scm-s3-image-bucket.s3.ap-south-1.amazonaws.com/scm-about/scm-values-tag-img.png"
                   alt="SylphCorps Media newsroom"
                   width={1100}
                   height={400}
@@ -136,7 +136,7 @@ async function AboutPageContent() {
               <h2 className="text-2xl font-bold font-serif text-black dark:text-white mb-6">Leadership Team</h2>
               <div>
                 <Image
-                  src="/images/scm-leadership-tag-img.png"
+                  src="https://scm-s3-image-bucket.s3.ap-south-1.amazonaws.com/scm-about/scm-leadership-tag-img.png"
                   alt="SylphCorps Media newsroom"
                   width={1100}
                   height={400}

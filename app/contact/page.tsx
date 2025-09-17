@@ -111,9 +111,9 @@ async function ContactPageContent() {
                   <Mail className="h-6 w-6 text-gray-600 dark:text-gray-400 mt-1" />
                   <div>
                     <h3 className="font-semibold text-black dark:text-white mb-2">Email</h3>
-                    <p className="text-gray-600 dark:text-gray-400">newsroom@sylphcorps.media</p>
-                    <p className="text-gray-600 dark:text-gray-400">tips@sylphcorps.media</p>
-                    <p className="text-gray-600 dark:text-gray-400">support@sylphcorps.media</p>
+                    <p className="text-gray-600 dark:text-gray-400">business@sylphcorpsmedia.com</p>
+                    <p className="text-gray-600 dark:text-gray-400">careers@sylphcorpsmedia.com</p>
+                    <p className="text-gray-600 dark:text-gray-400">support@sylphcorpsmedia.com</p>
                   </div>
                 </div>
 
@@ -121,9 +121,9 @@ async function ContactPageContent() {
                   <Phone className="h-6 w-6 text-gray-600 dark:text-gray-400 mt-1" />
                   <div>
                     <h3 className="font-semibold text-black dark:text-white mb-2">Phone</h3>
-                    <p className="text-gray-600 dark:text-gray-400">Newsroom: +91 11 4567-8901</p>
-                    <p className="text-gray-600 dark:text-gray-400">Subscriptions: +91 11 4567-8902</p>
-                    <p className="text-gray-600 dark:text-gray-400">Advertising: +91 11 4567-8903</p>
+                    <p className="text-gray-600 dark:text-gray-400">Newsroom: +91 7042954064</p>
+                    <p className="text-gray-600 dark:text-gray-400">Subscriptions: +91 7042954064</p>
+                    <p className="text-gray-600 dark:text-gray-400">Advertising: +91 7042954064</p>
                   </div>
                 </div>
 
@@ -134,9 +134,9 @@ async function ContactPageContent() {
                     <p className="text-gray-600 dark:text-gray-400">
                       SylphCorps Media
                       <br />
-                      Block A, Connaught Place
+                      Block A, Krishna Nagar
                       <br />
-                      New Delhi, Delhi 110001
+                      New Delhi, Delhi 110051
                       <br />
                       India
                     </p>
@@ -160,8 +160,8 @@ async function ContactPageContent() {
               <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <h3 className="font-semibold text-black dark:text-white mb-3">News Tips</h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Have a story tip or breaking news? Contact our newsroom directly at tips@sylphcorps.media or call our
-                  24/7 tip line at +91 11 4567-NEWS. We protect the confidentiality of our sources.
+                  Have a story tip or breaking news? Contact our newsroom directly at tips@sylphcorpsmedia.com or call our
+                  24/7 tip line at +91 7042954064. We protect the confidentiality of our sources.
                 </p>
               </div>
             </div>

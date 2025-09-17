@@ -47,44 +47,64 @@ export function CategoryPageClient({ category, initialArticles, categorySlug }: 
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold font-serif text-black dark:text-white mb-4">{category.name}</h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">{category.description}</p>
+        <h1 className="text-4xl md:text-5xl font-bold font-serif text-black dark:text-white mb-4">
+          {category.name}
+        </h1>
+        <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+          {category.description}
+        </p>
       </div>
 
       {articles.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400 text-lg">No articles found in this category yet.</p>
+          <p className="text-gray-600 dark:text-gray-400 text-lg">
+            No articles found in this category yet.
+          </p>
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {articles.map((article) => (
-              <Card key={article.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="aspect-video relative">
-                  <Image src={article.image || "/placeholder.svg"} alt={article.title} fill className="object-cover" />
-                </div>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Badge variant="secondary" className="text-xs">
-                      {article.category}
-                    </Badge>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{getTimeAgo(article.publishedAt)}</span>
+              // ✅ key on Link (outermost element)
+              <Link
+                key={article.id}
+                href={`/article/${article.slug}`}
+                className="block" // makes whole card clickable
+              >
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="aspect-video relative">
+                    <Image
+                      src={article.image || "/placeholder.svg"}
+                      alt={article.title}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-                  <h3 className="font-bold text-lg mb-2 line-clamp-2">
-                    <Link
-                      href={`/article/${article.slug}`}
-                      className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                    >
-                      {article.title}
-                    </Link>
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">{article.summary}</p>
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>By {article.author.name}</span>
-                    <span>{article.readTime}</span>
-                  </div>
-                </CardContent>
-              </Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge variant="secondary" className="text-xs">
+                        {article.category}
+                      </Badge>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {getTimeAgo(article.publishedAt)}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-lg mb-2 line-clamp-2">
+                      {/* ✅ removed inner Link */}
+                      <span className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                        {article.title}
+                      </span>
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">
+                      {article.summary}
+                    </p>
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>By {article.author.name}</span>
+                      <span>{article.readTime}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
 

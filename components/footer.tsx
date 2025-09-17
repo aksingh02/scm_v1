@@ -81,16 +81,16 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Follow Us</h4>
             <div className="flex space-x-4 mb-4">
-              <Link href="#" className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors">
+              {/* <Link href="#" className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors">
                 <Facebook className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors">
+              </Link> */}
+              <Link href="https://x.com/sylphcorpsmedia" className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors">
                 <Twitter className="h-5 w-5" />
               </Link>
-              <Link href="#" className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors">
+              <Link href="https://www.instagram.com/sylphcorpsmedia" className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors">
                 <Instagram className="h-5 w-5" />
               </Link>
-              <Link href="#" className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors">
+              <Link href="https://www.youtube.com/@sylphcorpsmedia" className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors">
                 <Youtube className="h-5 w-5" />
               </Link>
             </div>
