@@ -1,5 +1,5 @@
 import { Separator } from "@/components/ui/separator"
-import { Facebook, Twitter, Instagram, Youtube } from "lucide-react"
+import { X, Instagram, Youtube } from "lucide-react"
 import Link from "next/link"
 
 export function Footer() {
@@ -84,13 +84,22 @@ export function Footer() {
               {/* <Link href="#" className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors">
                 <Facebook className="h-5 w-5" />
               </Link> */}
-              <Link href="https://x.com/sylphcorpsmedia" className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors">
-                <Twitter className="h-5 w-5" />
+              <Link
+                href="https://x.com/sylphcorpsmedia"
+                className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
               </Link>
-              <Link href="https://www.instagram.com/sylphcorpsmedia" className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors">
+              <Link
+                href="https://www.instagram.com/sylphcorpsmedia"
+                className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors"
+              >
                 <Instagram className="h-5 w-5" />
               </Link>
-              <Link href="https://www.youtube.com/@sylphcorpsmedia" className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors">
+              <Link
+                href="https://www.youtube.com/@sylphcorpsmedia"
+                className="text-gray-300 dark:text-gray-400 hover:text-white transition-colors"
+              >
                 <Youtube className="h-5 w-5" />
               </Link>
             </div>
@@ -105,7 +114,9 @@ export function Footer() {
 
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-300 dark:text-gray-400">
           <p>&copy; {new Date().getFullYear()} SylphCorps Media. All rights reserved.</p>
-          <p>Founder & CEO: <strong>A. K. Singh</strong> </p>
+          <p>
+            Founder & CEO: <strong>A. K. Singh</strong>{" "}
+          </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link href="/privacy" className="hover:text-white transition-colors">
               Privacy Policy
