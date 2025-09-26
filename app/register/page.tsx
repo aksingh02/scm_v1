@@ -1,9 +1,12 @@
 import { Suspense } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { RegisterForm } from "@/components/auth/register-form"
 import { getAllCategories } from "@/lib/data"
-import { PageSkeleton } from "@/components/loading/page-skeleton"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
+import RegisterForm from "@/components/auth/register-form"
 
 async function RegisterPageContent() {
   const categories = await getAllCategories()
@@ -15,29 +18,37 @@ async function RegisterPageContent() {
 
       <main className="max-w-md mx-auto px-4 py-16">
         <div className="mb-6">
-          <a
+          <Link
             href="/login"
             className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
           >
-            <span aria-hidden="true" className="mr-2">
-              ←
-            </span>
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Login
-          </a>
+          </Link>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-          <div className="p-8">
-            <header className="space-y-1 text-center mb-6">
-              <h1 className="text-3xl font-bold font-serif text-black dark:text-white">Create Account</h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Join SylphCorps Media to stay updated with the latest news
-              </p>
-            </header>
-
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
+            <CardDescription className="text-center">
+              Join SylphCorps Media to stay updated with the latest news
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <RegisterForm />
-          </div>
-        </div>
+
+            <Separator />
+
+            <div className="text-center space-y-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Already have an account?{" "}
+                <Link href="/login" className="text-blue-600 hover:underline font-medium">
+                  Sign in here
+                </Link>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-500">
@@ -54,7 +65,7 @@ async function RegisterPageContent() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<div>Loading...</div>}>
       <RegisterPageContent />
     </Suspense>
   )

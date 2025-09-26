@@ -1,11 +1,12 @@
-import { Suspense } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { LoginForm } from "@/components/auth/login-form"
 import { getAllCategories } from "@/lib/data"
+import Link from "next/link"
+import { Suspense } from "react"
 import { PageSkeleton } from "@/components/loading/page-skeleton"
+import LoginForm from "@/components/auth/login-form"
 
 async function LoginPageContent() {
   const categories = await getAllCategories()
@@ -28,35 +29,34 @@ async function LoginPageContent() {
             <div className="mt-6">
               <Separator className="my-4" />
               <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                Don&apos;t have an account?{" "}
-                <a href="/register" className="text-black dark:text-white hover:underline font-medium">
+                Don't have an account?{" "}
+                <Link href="/register" className="text-black dark:text-white hover:underline font-medium">
                   Create one here
-                </a>
+                </Link>
               </p>
             </div>
 
             <div className="mt-6 text-center">
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 By signing in, you agree to our{" "}
-                <a href="/terms" className="hover:underline">
+                <Link href="/terms" className="hover:underline">
                   Terms of Service
-                </a>{" "}
+                </Link>{" "}
                 and{" "}
-                <a href="/privacy" className="hover:underline">
+                <Link href="/privacy" className="hover:underline">
                   Privacy Policy
-                </a>
-                .
+                </Link>
               </p>
             </div>
           </div>
 
           <div className="mt-8 text-center">
             <p className="text-gray-600 dark:text-gray-400 mb-4">New to SylphCorps Media?</p>
-            <a href="/subscribe">
+            <Link href="/subscribe">
               <Button variant="outline" className="border-gray-300 dark:border-gray-600 bg-transparent">
                 Start Your Subscription
               </Button>
-            </a>
+            </Link>
           </div>
         </div>
       </main>
