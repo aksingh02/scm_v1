@@ -1,8 +1,6 @@
 import { cookies } from "next/headers"
-import { env } from "./env"
-
-const API_BASE_URL = env.baseUrl
-const API_KEY = env.apiKey
+import type { HeadersInit } from "next/dist/server/web/spec-extension/adapters/headers"
+import { API_BASE_URL } from "@/lib/api"
 
 export const AUTH_COOKIE = "scm_token"
 
@@ -15,17 +13,17 @@ export interface SessionUser {
   emailVerified: boolean
   profilePictureUrl?: string | null
   lastLogin?: string | null
-  token: string
+  token?: string
 }
 
-export function getAuthTokenCookie() {
-  const cookieStore = cookies()
+export async function getAuthTokenCookie() {
+  const cookieStore = await cookies()
   const token = cookieStore.get(AUTH_COOKIE)?.value
   return token || null
 }
 
-export function setAuthTokenCookie(token: string, rememberMe: boolean) {
-  const cookieStore = cookies()
+export async function setAuthTokenCookie(token: string, rememberMe: boolean) {
+  const cookieStore = await cookies()
   // 7 days if rememberMe, otherwise session cookie
   const maxAge = rememberMe ? 60 * 60 * 24 * 7 : undefined
   cookieStore.set(AUTH_COOKIE, token, {
@@ -37,23 +35,22 @@ export function setAuthTokenCookie(token: string, rememberMe: boolean) {
   })
 }
 
-export function clearAuthTokenCookie() {
-  const cookieStore = cookies()
+export async function clearAuthTokenCookie() {
+  const cookieStore = await cookies()
   cookieStore.set(AUTH_COOKIE, "", { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 0 })
 }
 
-// Backend fetch helper with API key and optional bearer token
+// Backend fetch helper with optional bearer token from cookie
 export async function backendFetch(path: string, init: RequestInit = {}, withAuth = false) {
   const url = `${API_BASE_URL}${path}`
   const headers: HeadersInit = {
     Accept: "application/json",
     "Content-Type": "application/json",
-    "X-API-Key": API_KEY,
     ...(init.headers || {}),
   }
 
   if (withAuth) {
-    const token = getAuthTokenCookie()
+    const token = await getAuthTokenCookie()
     if (!token) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
     }
@@ -87,7 +84,7 @@ export interface NewsUserProfile {
 }
 
 export async function getCurrentUser(): Promise<NewsUserProfile | null> {
-  const token = getAuthTokenCookie()
+  const token = await getAuthTokenCookie()
   if (!token) return null
 
   const res = await backendFetch("/news-users/profile", { method: "GET" }, true)

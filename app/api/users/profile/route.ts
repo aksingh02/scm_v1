@@ -9,7 +9,15 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   const body = await req.json()
-  const res = await backendFetch("/news-users/profile", { method: "PUT", body: JSON.stringify(body) }, true)
+  const res = await backendFetch(
+    "/news-users/profile",
+    {
+      method: "PUT",
+      body: JSON.stringify(body),
+    },
+    true,
+  )
+
   const data = await res.json().catch(() => ({}))
   return NextResponse.json(data, { status: res.status })
 }

@@ -1,18 +1,71 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
+import { Search, LogOut, SettingsIcon, UserIcon } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { MobileNav } from "./mobile-nav"
 import { ThemeToggle } from "./theme-toggle"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface HeaderProps {
   navigationItems?: string[]
 }
 
+interface SessionState {
+  loading: boolean
+  authenticated: boolean
+  user?: {
+    firstName?: string
+    lastName?: string
+    fullName?: string
+    email?: string
+    profilePictureUrl?: string | null
+  } | null
+}
+
 export function Header({ navigationItems = [] }: HeaderProps) {
+  const [session, setSession] = useState<SessionState>({ loading: true, authenticated: false, user: null })
+
+  useEffect(() => {
+    let mounted = true
+    async function load() {
+      try {
+        const res = await fetch("/api/auth/session", { cache: "no-store" })
+        if (!mounted) return
+        if (res.ok) {
+          const data = await res.json()
+          setSession({ loading: false, authenticated: true, user: data.user })
+        } else {
+          setSession({ loading: false, authenticated: false, user: null })
+        }
+      } catch {
+        setSession({ loading: false, authenticated: false, user: null })
+      }
+    }
+    load()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  async function signOut() {
+    await fetch("/api/auth/signout", { method: "POST" })
+    window.location.reload()
+  }
+
+  const userInitials = session.user?.fullName?.[0] || session.user?.firstName?.[0] || session.user?.email?.[0] || ""
+
   return (
     <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
       {/* Top Bar */}
@@ -39,9 +92,41 @@ export function Header({ navigationItems = [] }: HeaderProps) {
             <Link href="/subscribe" className="hover:text-gray-900 dark:hover:text-gray-100 hidden sm:block">
               Subscribe
             </Link>
-            <Link href="/login" className="hover:text-gray-900 dark:hover:text-gray-100">
-              Log In
-            </Link>
+
+            {/* Auth area */}
+            {!session.loading && !session.authenticated && (
+              <Link href="/login" className="hover:text-gray-900 dark:hover:text-gray-100">
+                Log In
+              </Link>
+            )}
+            {!session.loading && session.authenticated && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button aria-label="User menu" className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={session.user?.profilePictureUrl || undefined} alt="User avatar" />
+                      <AvatarFallback>{userInitials || <UserIcon className="h-4 w-4" />}</AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="truncate">
+                    {session.user?.fullName || session.user?.email || "Account"}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <Link href="/account/settings">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <SettingsIcon className="mr-2 h-4 w-4" />
+                      <span>Account settings</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuItem className="cursor-pointer" onClick={signOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </div>
@@ -49,7 +134,6 @@ export function Header({ navigationItems = [] }: HeaderProps) {
       {/* Main Header */}
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-
           <div className="flex items-center">
             <MobileNav navigationItems={["Home", ...navigationItems]} />
 
@@ -69,7 +153,7 @@ export function Header({ navigationItems = [] }: HeaderProps) {
                   SylphCorps Media
                 </span>
                 <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 italic mt-1">
-                  Innovating Tomorrow's News Today
+                  Innovating Tomorrow&apos;s News Today
                 </p>
               </div>
             </Link>
