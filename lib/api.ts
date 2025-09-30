@@ -1,7 +1,7 @@
 import { env } from "./env"
 
 // ---- Config ----
-const API_BASE_URL = env.baseUrl
+export const API_BASE_URL = env.baseUrl
 const API_TIMEOUT = env.apiTimeOut
 const API_KEY = env.apiKey
 

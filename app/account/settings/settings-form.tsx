@@ -65,24 +65,35 @@ export default function SettingsForm({ initialUser }: { initialUser: NewsUserPro
   async function onUploadPic(file: File) {
     setUploading(true)
     setMsg(null)
-    const base64 = await fileToBase64(file)
+
+    const formData = new FormData()
+    formData.append("file", file)
+
     const res = await fetch("/api/users/profile/picture", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ file: base64 }),
+      body: formData,
     })
-    const ok = res.ok
+
     setUploading(false)
-    if (ok) {
-      // Assume backend updates profile picture; refresh to fetch new URL
-      setMsg({ type: "success", text: "Profile picture updated." })
-      setProfilePictureUrl(profilePictureUrl + "?t=" + Date.now())
-      router.refresh()
+
+    if (res.ok) {
+      const data = await res.json();
+      setMsg({ type: "success", text: data.message })
     } else {
-      const data = await res.json().catch(() => ({}))
-      setMsg({ type: "error", text: data?.error || "Failed to upload picture." })
+      let errorMsg = "Failed to upload picture."
+      const contentType = res.headers.get("content-type")
+      if (contentType && contentType.includes("application/json")) {
+        const data = await res.json()
+        errorMsg = data?.message || errorMsg
+      } else {
+        const text = await res.text()
+        errorMsg = text || errorMsg
+      }
+      setMsg({ type: "error", text: errorMsg })
     }
+
   }
+
 
   async function onRemovePic() {
     setUploading(true)
