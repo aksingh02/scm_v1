@@ -3,103 +3,212 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { Menu, X } from "lucide-react"
+import {
+  Menu,
+  Search,
+  Home,
+  Globe,
+  Building,
+  TrendingUp,
+  Gamepad2,
+  Film,
+  Smartphone,
+  Heart,
+  Microscope,
+} from "lucide-react"
+import Link from "next/link"
+import { ThemeToggle } from "./theme-toggle"
+import { useRouter } from "next/navigation"
 
 interface MobileNavProps {
-  navigationItems: string[]
+  navigationItems?: string[]
 }
 
-export function MobileNav({ navigationItems }: MobileNavProps) {
+const categoryIcons = {
+  Home: Home,
+  World: Globe,
+  Politics: Building,
+  Business: Building,
+  Economics: TrendingUp,
+  Sports: Gamepad2,
+  Entertainment: Film,
+  Tech: Smartphone,
+  Health: Heart,
+  Science: Microscope,
+}
+
+export function MobileNav({ navigationItems = [] }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [email, setEmail] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [newsletterEmail, setNewsletterEmail] = useState("")
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
 
   useEffect(() => {
     fetch("/api/auth/session")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setUser(data))
-      .catch(() => setUser(null))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.user) setUser(data.user)
+      })
+      .catch(() => {})
   }, [])
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    if (email) {
+    if (searchQuery.trim()) {
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
       setIsOpen(false)
-      router.push(`/register?email=${encodeURIComponent(email)}&newsletter=true`)
+    }
+  }
+
+  const handleLinkClick = () => {
+    setIsOpen(false)
+  }
+
+  const handleNewsletterSubscribe = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newsletterEmail.trim()) {
+      setIsOpen(false)
+      router.push(`/register?email=${encodeURIComponent(newsletterEmail)}&newsletter=true`)
     }
   }
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
-          <Menu className="h-6 w-6" />
+        <Button variant="ghost" size="sm" className="md:hidden">
+          <Menu className="h-5 w-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+      <SheetContent side="left" className="w-80 p-0 bg-white dark:bg-gray-900">
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between mb-6">
-            <Link href="/" className="text-2xl font-bold font-serif" onClick={() => setIsOpen(false)}>
-              SCM News
-            </Link>
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} aria-label="Close menu">
-              <X className="h-6 w-6" />
-            </Button>
+          <SheetHeader className="p-6 border-b border-gray-200 dark:border-gray-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <SheetTitle className="text-xl font-bold font-serif text-black dark:text-white">
+                  SylphCorps Media
+                </SheetTitle>
+                <p className="text-xs text-gray-600 dark:text-gray-400 italic mt-1">Innovating Tomorrow's News Today</p>
+              </div>
+              <ThemeToggle />
+            </div>
+          </SheetHeader>
+
+          {/* Search Section */}
+          <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search news..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                />
+              </div>
+              <Button
+                type="submit"
+                size="sm"
+                className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+            </form>
           </div>
 
-          <nav className="flex-1 space-y-4">
-            <Link
-              href="/"
-              className="block py-2 text-lg hover:text-gray-600 dark:hover:text-gray-300"
-              onClick={() => setIsOpen(false)}
-            >
-              Home
-            </Link>
-            {navigationItems.map((item) => (
-              <Link
-                key={item}
-                href={`/${item.toLowerCase().replace(/\s+/g, "-")}`}
-                className="block py-2 text-lg hover:text-gray-600 dark:hover:text-gray-300"
-                onClick={() => setIsOpen(false)}
-              >
-                {item}
-              </Link>
-            ))}
+          {/* Navigation Links */}
+          <nav className="flex-1 overflow-y-auto">
+            <div className="p-4">
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+                Categories
+              </h3>
+              <div className="space-y-2">
+                {navigationItems.map((item) => {
+                  const IconComponent = categoryIcons[item as keyof typeof categoryIcons] || Home
+                  const href = item === "Home" ? "/" : `/${item.toLowerCase()}`
+
+                  return (
+                    <Link
+                      key={item}
+                      href={href}
+                      onClick={handleLinkClick}
+                      className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white transition-colors"
+                    >
+                      <IconComponent className="h-5 w-5" />
+                      <span className="font-medium">{item}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Quick Links */}
+            <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+                Quick Links
+              </h3>
+              <div className="space-y-2">
+                <Link
+                  href="/subscribe"
+                  onClick={handleLinkClick}
+                  className="block px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white transition-colors"
+                >
+                  Subscribe
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={handleLinkClick}
+                  className="block px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white transition-colors"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/about"
+                  onClick={handleLinkClick}
+                  className="block px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white transition-colors"
+                >
+                  About Us
+                </Link>
+                <Link
+                  href="/contact"
+                  onClick={handleLinkClick}
+                  className="block px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white transition-colors"
+                >
+                  Contact
+                </Link>
+              </div>
+            </div>
           </nav>
 
-          <Separator className="my-6" />
-
-          <div className="space-y-4">
-            <h3 className="font-semibold text-sm text-gray-500 dark:text-gray-400">
-              {user?.newsletterSubscribed ? "Newsletter" : "Stay Updated"}
-            </h3>
-            {user?.newsletterSubscribed ? (
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                <p className="mb-2">✓ You're subscribed to our newsletter</p>
-                <Link
-                  href="/account/settings"
-                  className="text-black dark:text-white hover:underline font-medium"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Manage preferences →
+          {/* Footer */}
+          <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
+            {user && user.newsletterSubscribed ? (
+              <div className="space-y-3">
+                <p className="text-sm text-center text-gray-700 dark:text-gray-300">
+                  ✓ You're subscribed to our newsletter
+                </p>
+                <Link href="/account/settings" onClick={handleLinkClick}>
+                  <Button
+                    variant="outline"
+                    className="w-full border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 bg-transparent"
+                  >
+                    Manage Preferences
+                  </Button>
                 </Link>
               </div>
             ) : (
-              <form onSubmit={handleNewsletterSubmit} className="space-y-3">
+              <form onSubmit={handleNewsletterSubscribe} className="space-y-2">
                 <Input
                   type="email"
-                  placeholder="Enter your email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
+                  placeholder="Enter your email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
                   className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                  required
                 />
                 <Button
                   type="submit"
@@ -109,6 +218,7 @@ export function MobileNav({ navigationItems }: MobileNavProps) {
                 </Button>
               </form>
             )}
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-3">© 2025 SylphCorps Media</p>
           </div>
         </div>
       </SheetContent>
