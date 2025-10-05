@@ -1,40 +1,45 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
+import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
-import { useToast } from "@/hooks/use-toast"
-import { User, Mail, Lock, Eye, EyeOff } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function RegisterForm() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const prefilledEmail = searchParams.get("email") || ""
+  const prefilledNewsletter = searchParams.get("newsletter") === "true"
+
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState(prefilledEmail)
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [agree, setAgree] = useState(false)
-  const [newsletter, setNewsletter] = useState(true)
-  const [showPw, setShowPw] = useState(false)
-  const [showPw2, setShowPw2] = useState(false)
+  const [agreeToTerms, setAgreeToTerms] = useState(false)
+  const [subscribeToNewsletter, setSubscribeToNewsletter] = useState(prefilledNewsletter)
   const [loading, setLoading] = useState(false)
-  const { toast } = useToast()
+  const [error, setError] = useState("")
 
-  const onSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (prefilledEmail) setEmail(prefilledEmail)
+    if (prefilledNewsletter) setSubscribeToNewsletter(true)
+  }, [prefilledEmail, prefilledNewsletter])
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!agree) {
-      toast({ title: "Please accept Terms and Privacy to continue", variant: "destructive" })
-      return
-    }
+    setError("")
+    setLoading(true)
+
     if (password !== confirmPassword) {
-      toast({ title: "Passwords do not match", variant: "destructive" })
+      setError("Passwords do not match")
+      setLoading(false)
       return
     }
 
-    setLoading(true)
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
@@ -45,179 +50,150 @@ export default function RegisterForm() {
           email,
           password,
           confirmPassword,
-          agreeToTerms: agree,
-          subscribeToNewsletter: newsletter,
+          agreeToTerms,
+          subscribeToNewsletter,
         }),
       })
-      const data = await res.json().catch(() => ({}))
 
-      if (!res.ok) {
-        toast({ title: "Registration failed", description: data.error || "Please try again.", variant: "destructive" })
-        return
+      const data = await res.json()
+
+      if (res.ok) {
+        // Redirect to login page after successful registration
+        router.push("/login?registered=true")
+      } else {
+        setError(data.error || data.message || "Registration failed")
       }
-      toast({
-        title: "Registration successful",
-        description: "Please check your email to verify your account.",
-      })
     } catch {
-      toast({ title: "Network error", description: "Please try again.", variant: "destructive" })
+      setError("Network error. Please try again.")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label htmlFor="firstName" className="text-sm font-medium">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-400">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             First Name
           </label>
-          <div className="relative">
-            <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              id="firstName"
-              type="text"
-              className="pl-10"
-              required
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-            />
-          </div>
+          <Input
+            id="firstName"
+            type="text"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+            className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+          />
         </div>
-        <div className="space-y-2">
-          <label htmlFor="lastName" className="text-sm font-medium">
+        <div>
+          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Last Name
           </label>
-          <div className="relative">
-            <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              id="lastName"
-              type="text"
-              className="pl-10"
-              required
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-            />
-          </div>
+          <Input
+            id="lastName"
+            type="text"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+            className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+          />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium">
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Email Address
         </label>
-        <div className="relative">
-          <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <Input
-            id="email"
-            type="email"
-            className="pl-10"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
+        <Input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+        />
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-medium">
+      <div>
+        <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Password
         </label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <Input
-            id="password"
-            type={showPw ? "text" : "password"}
-            className="pl-10 pr-10"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button
-            type="button"
-            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-            onClick={() => setShowPw((s) => !s)}
-          >
-            {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </button>
-        </div>
-        <p className="text-xs text-gray-500">
-          Password must be at least 8 characters with uppercase, lowercase, and numbers
-        </p>
+        <Input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+        />
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="confirmPassword" className="text-sm font-medium">
+      <div>
+        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Confirm Password
         </label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <Input
-            id="confirmPassword"
-            type={showPw2 ? "text" : "password"}
-            className="pl-10 pr-10"
-            required
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-          <button
-            type="button"
-            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-            onClick={() => setShowPw2((s) => !s)}
-          >
-            {showPw2 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </button>
-        </div>
+        <Input
+          id="confirmPassword"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+          className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+        />
       </div>
 
-      <div className="space-y-3">
-        <label className="flex items-start space-x-2 text-sm">
-          <input
-            type="checkbox"
-            className="mt-0.5 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            checked={agree}
-            onChange={(e) => setAgree(e.target.checked)}
-          />
-          <span className="text-gray-600 dark:text-gray-400">
-            I agree to the{" "}
-            <Link href="/terms" className="text-blue-600 hover:underline">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="text-blue-600 hover:underline">
-              Privacy Policy
-            </Link>
-          </span>
-        </label>
-
-        <label className="flex items-start space-x-2 text-sm">
-          <input
-            type="checkbox"
-            className="mt-0.5 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            checked={newsletter}
-            onChange={(e) => setNewsletter(e.target.checked)}
-          />
-          <span className="text-gray-600 dark:text-gray-400">
-            Subscribe to our newsletter for the latest news updates
-          </span>
+      <div className="flex items-start space-x-2">
+        <Checkbox id="terms" checked={agreeToTerms} onCheckedChange={(checked) => setAgreeToTerms(checked === true)} />
+        <label
+          htmlFor="terms"
+          className="text-sm text-gray-700 dark:text-gray-300 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          I agree to the{" "}
+          <Link href="/terms" className="underline hover:text-gray-900 dark:hover:text-white">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="underline hover:text-gray-900 dark:hover:text-white">
+            Privacy Policy
+          </Link>
         </label>
       </div>
 
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Creating..." : "Create Account"}
+      <div className="flex items-start space-x-2">
+        <Checkbox
+          id="newsletter"
+          checked={subscribeToNewsletter}
+          onCheckedChange={(checked) => setSubscribeToNewsletter(checked === true)}
+        />
+        <label
+          htmlFor="newsletter"
+          className="text-sm text-gray-700 dark:text-gray-300 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          Subscribe to our newsletter for the latest updates
+        </label>
+      </div>
+
+      <Button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+      >
+        {loading ? "Creating Account..." : "Create Account"}
       </Button>
 
-      <Separator />
-
-      <div className="text-center space-y-2">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Already have an account?{" "}
-          <Link href="/login" className="text-blue-600 hover:underline font-medium">
-            Sign in here
-          </Link>
-        </p>
-      </div>
+      <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+        Already have an account?{" "}
+        <Link href="/login" className="font-medium text-black dark:text-white hover:underline">
+          Log in
+        </Link>
+      </p>
     </form>
   )
 }

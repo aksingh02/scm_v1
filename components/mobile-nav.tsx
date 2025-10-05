@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { ThemeToggle } from "./theme-toggle"
+import { useRouter } from "next/navigation"
 
 interface MobileNavProps {
   navigationItems?: string[]
@@ -40,8 +41,20 @@ const categoryIcons = {
 }
 
 export function MobileNav({ navigationItems = [] }: MobileNavProps) {
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [newsletterEmail, setNewsletterEmail] = useState("")
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.user) setUser(data.user)
+      })
+      .catch(() => {})
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,6 +66,14 @@ export function MobileNav({ navigationItems = [] }: MobileNavProps) {
 
   const handleLinkClick = () => {
     setIsOpen(false)
+  }
+
+  const handleNewsletterSubscribe = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newsletterEmail.trim()) {
+      router.push(`/register?email=${encodeURIComponent(newsletterEmail)}&newsletter=true`)
+      setIsOpen(false)
+    }
   }
 
   return (
@@ -165,12 +186,35 @@ export function MobileNav({ navigationItems = [] }: MobileNavProps) {
 
           {/* Footer */}
           <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
-            <Button
-              className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
-              onClick={handleLinkClick}
-            >
-              Subscribe to Newsletter
-            </Button>
+            {user && user.newsletterSubscribed ? (
+              <>
+                <p className="text-sm text-center text-gray-700 dark:text-gray-300 mb-3">
+                  ✓ You're subscribed to our newsletter
+                </p>
+                <Link href="/account/settings" onClick={handleLinkClick}>
+                  <Button variant="outline" className="w-full border-gray-300 dark:border-gray-600 bg-transparent">
+                    Manage Preferences
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <form onSubmit={handleNewsletterSubscribe}>
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  className="mb-2 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                  required
+                />
+                <Button
+                  type="submit"
+                  className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                >
+                  Subscribe to Newsletter
+                </Button>
+              </form>
+            )}
             <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-3">© 2025 SylphCorps Media</p>
           </div>
         </div>
