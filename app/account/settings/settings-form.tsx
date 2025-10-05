@@ -1,408 +1,290 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useToast } from "@/hooks/use-toast"
-import { Loader2, Upload, X } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useToast } from "@/hooks/use-toast"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { User, Mail, Lock } from "lucide-react"
+import type { NewsUserProfile } from "@/lib/auth"
 
 interface SettingsFormProps {
-  user: any
+  user: NewsUserProfile
 }
 
-export function SettingsForm({ user }: SettingsFormProps) {
-  const router = useRouter()
+export default function SettingsForm({ user }: SettingsFormProps) {
+  const [firstName, setFirstName] = useState(user.firstName || "")
+  const [lastName, setLastName] = useState(user.lastName || "")
+  const [bio, setBio] = useState(user.bio || "")
+  const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || "")
+  const [dateOfBirth, setDateOfBirth] = useState(
+    user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split("T")[0] : "",
+  )
+  const [location, setLocation] = useState(user.location || "")
+  const [website, setWebsite] = useState(user.website || "")
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(user.newsletterSubscribed || false)
+  const [profilePicture, setProfilePicture] = useState<File | null>(null)
+  const [profilePicturePreview, setProfilePicturePreview] = useState(user.profilePictureUrl || "")
+  const [loading, setLoading] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
   const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
-  const [profileData, setProfileData] = useState({
-    firstName: user?.firstName || "",
-    lastName: user?.lastName || "",
-    bio: user?.bio || "",
-    phoneNumber: user?.phoneNumber || "",
-    dateOfBirth: user?.dateOfBirth ? user.dateOfBirth.split("T")[0] : "",
-    location: user?.location || "",
-    website: user?.website || "",
-    newsletterSubscribed: user?.newsletterSubscribed || false,
-  })
+  const router = useRouter()
 
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  })
-
-  const handleProfileUpdate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    try {
-      const response = await fetch("/api/users/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profileData),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || "Failed to update profile")
-      }
-
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      })
-
-      router.refresh()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setProfilePicture(file)
+      setProfilePicturePreview(URL.createObjectURL(file))
     }
   }
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "New passwords do not match",
-        variant: "destructive",
-      })
-      return
+  const handleRemoveProfilePicture = async () => {
+    try {
+      const res = await fetch("/api/users/profile/picture", { method: "DELETE" })
+      if (res.ok) {
+        setProfilePicturePreview("")
+        setProfilePicture(null)
+        toast({ title: "Profile picture removed", description: "Your profile picture has been removed successfully." })
+        router.refresh()
+      } else {
+        toast({ title: "Failed to remove picture", variant: "destructive" })
+      }
+    } catch (error) {
+      toast({ title: "Network error", variant: "destructive" })
     }
+  }
 
-    setIsLoading(true)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
 
     try {
-      // Request password reset email
-      const response = await fetch("/api/auth/forgot-password", {
+      // Upload profile picture if changed
+      if (profilePicture) {
+        const formData = new FormData()
+        formData.append("file", profilePicture)
+
+        const uploadRes = await fetch("/api/users/profile/picture", {
+          method: "POST",
+          body: formData,
+        })
+
+        if (!uploadRes.ok) {
+          toast({ title: "Failed to upload profile picture", variant: "destructive" })
+          setLoading(false)
+          return
+        }
+      }
+
+      // Update profile
+      const res = await fetch("/api/users/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          bio,
+          phoneNumber,
+          dateOfBirth: dateOfBirth ? new Date(dateOfBirth).toISOString() : null,
+          location,
+          website,
+          newsletterSubscribed,
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        toast({ title: "Failed to update profile", description: data.error, variant: "destructive" })
+        return
+      }
+
+      toast({ title: "Profile updated", description: "Your profile has been updated successfully." })
+      router.refresh()
+    } catch (error) {
+      toast({ title: "Network error", description: "Please try again.", variant: "destructive" })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRequestPasswordReset = async () => {
+    setPasswordLoading(true)
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email }),
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to send password reset email")
+      if (res.ok) {
+        toast({
+          title: "Password reset email sent",
+          description: "Check your email for a link to reset your password.",
+        })
+      } else {
+        toast({ title: "Failed to send reset email", variant: "destructive" })
       }
-
-      toast({
-        title: "Success",
-        description: "Password reset email sent. Please check your inbox.",
-      })
-
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      })
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      })
+    } catch (error) {
+      toast({ title: "Network error", variant: "destructive" })
     } finally {
-      setIsLoading(false)
+      setPasswordLoading(false)
     }
   }
 
-  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const formData = new FormData()
-    formData.append("file", file)
-
-    setIsLoading(true)
-
-    try {
-      const response = await fetch("/api/users/profile/picture", {
-        method: "POST",
-        body: formData,
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to upload profile picture")
-      }
-
-      toast({
-        title: "Success",
-        description: "Profile picture updated successfully",
-      })
-
-      router.refresh()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleProfilePictureRemove = async () => {
-    setIsLoading(true)
-
-    try {
-      const response = await fetch("/api/users/profile/picture", {
-        method: "DELETE",
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to remove profile picture")
-      }
-
-      toast({
-        title: "Success",
-        description: "Profile picture removed successfully",
-      })
-
-      router.refresh()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleDeactivate = async () => {
-    if (!confirm("Are you sure you want to deactivate your account? This action cannot be undone.")) {
+  const handleDeactivateAccount = async () => {
+    if (
+      !confirm("Are you sure you want to deactivate your account? This action can be reversed by contacting support.")
+    ) {
       return
     }
 
-    setIsLoading(true)
-
     try {
-      const response = await fetch("/api/users/deactivate", {
-        method: "POST",
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to deactivate account")
+      const res = await fetch("/api/users/deactivate", { method: "POST" })
+      if (res.ok) {
+        toast({ title: "Account deactivated", description: "Your account has been deactivated." })
+        router.push("/")
+      } else {
+        toast({ title: "Failed to deactivate account", variant: "destructive" })
       }
-
-      toast({
-        title: "Success",
-        description: "Account deactivated successfully",
-      })
-
-      router.push("/")
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
+    } catch (error) {
+      toast({ title: "Network error", variant: "destructive" })
     }
   }
 
+  const userInitials = `${firstName?.[0] || ""}${lastName?.[0] || ""}`
+
   return (
     <div className="space-y-6">
-      {/* Profile Picture Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Profile Picture</CardTitle>
-          <CardDescription>Update your profile picture</CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-center gap-6">
-          <Avatar className="h-24 w-24">
-            <AvatarImage src={user?.profilePictureUrl || "/placeholder.svg"} />
-            <AvatarFallback className="text-2xl">
-              {(user?.firstName?.[0] || "") + (user?.lastName?.[0] || "")}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex gap-2">
-            <label htmlFor="profile-picture">
-              <Button type="button" variant="outline" disabled={isLoading} asChild>
-                <span>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload
-                </span>
-              </Button>
-              <input
-                id="profile-picture"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleProfilePictureUpload}
-              />
-            </label>
-            {user?.profilePictureUrl && (
-              <Button type="button" variant="outline" onClick={handleProfilePictureRemove} disabled={isLoading}>
-                <X className="h-4 w-4 mr-2" />
-                Remove
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Profile Information Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
-          <CardDescription>Update your personal information</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Profile Information
+          </CardTitle>
+          <CardDescription>Update your personal information and profile picture</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleProfileUpdate} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex items-center gap-6">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={profilePicturePreview || "/placeholder.svg"} alt={`${firstName} ${lastName}`} />
+                <AvatarFallback className="text-2xl">{userInitials}</AvatarFallback>
+              </Avatar>
               <div className="space-y-2">
-                <label htmlFor="firstName" className="text-sm font-medium">
-                  First Name
-                </label>
-                <Input
-                  id="firstName"
-                  value={profileData.firstName}
-                  onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="lastName" className="text-sm font-medium">
-                  Last Name
-                </label>
-                <Input
-                  id="lastName"
-                  value={profileData.lastName}
-                  onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
-                  required
-                />
+                <Input type="file" accept="image/*" onChange={handleProfilePictureChange} className="max-w-xs" />
+                {profilePicturePreview && (
+                  <Button type="button" variant="outline" size="sm" onClick={handleRemoveProfilePicture}>
+                    Remove Picture
+                  </Button>
+                )}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="bio" className="text-sm font-medium">
-                Bio
-              </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">First Name</label>
+                <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Last Name</label>
+                <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Bio</label>
               <Textarea
-                id="bio"
-                value={profileData.bio}
-                onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Tell us about yourself"
                 rows={4}
-                placeholder="Tell us about yourself..."
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="phoneNumber" className="text-sm font-medium">
-                  Phone Number
-                </label>
+              <div>
+                <label className="block text-sm font-medium mb-2">Phone Number</label>
                 <Input
-                  id="phoneNumber"
                   type="tel"
-                  value={profileData.phoneNumber}
-                  onChange={(e) => setProfileData({ ...profileData, phoneNumber: e.target.value })}
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="+1 (555) 123-4567"
                 />
               </div>
-              <div className="space-y-2">
-                <label htmlFor="dateOfBirth" className="text-sm font-medium">
-                  Date of Birth
-                </label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={profileData.dateOfBirth}
-                  onChange={(e) => setProfileData({ ...profileData, dateOfBirth: e.target.value })}
-                />
+              <div>
+                <label className="block text-sm font-medium mb-2">Date of Birth</label>
+                <Input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="location" className="text-sm font-medium">
-                  Location
-                </label>
-                <Input
-                  id="location"
-                  value={profileData.location}
-                  onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
-                  placeholder="City, Country"
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="website" className="text-sm font-medium">
-                  Website
-                </label>
-                <Input
-                  id="website"
-                  type="url"
-                  value={profileData.website}
-                  onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
-                  placeholder="https://example.com"
-                />
+              <div>
+                <label className="block text-sm font-medium mb-2">Location</label>
+                <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, Country" />
               </div>
             </div>
 
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="newsletter"
-                checked={profileData.newsletterSubscribed}
-                onCheckedChange={(checked) =>
-                  setProfileData({ ...profileData, newsletterSubscribed: checked as boolean })
-                }
+                checked={newsletterSubscribed}
+                onCheckedChange={(checked) => setNewsletterSubscribed(checked as boolean)}
               />
-              <label htmlFor="newsletter" className="text-sm font-medium cursor-pointer">
-                Subscribe to newsletter
+              <label htmlFor="newsletter" className="text-sm">
+                Subscribe to newsletter for latest news and updates
               </label>
             </div>
 
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Changes
+            <Button type="submit" disabled={loading} className="w-full md:w-auto">
+              {loading ? "Saving..." : "Save Changes"}
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      {/* Change Password Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Change Password</CardTitle>
-          <CardDescription>Request a password reset email</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Email Address
+          </CardTitle>
+          <CardDescription>Your email address cannot be changed</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handlePasswordChange} className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              For security reasons, we'll send you an email with a link to reset your password.
-            </p>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Send Reset Email
-            </Button>
-          </form>
+          <Input value={user.email} disabled className="max-w-md" />
         </CardContent>
       </Card>
 
-      {/* Danger Zone Card */}
-      <Card className="border-red-200 dark:border-red-800">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-red-600 dark:text-red-400">Danger Zone</CardTitle>
-          <CardDescription>Irreversible account actions</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            Change Password
+          </CardTitle>
+          <CardDescription>Request a password reset link via email</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button variant="destructive" onClick={handleDeactivate} disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            For security reasons, we'll send you an email with a link to reset your password.
+          </p>
+          <Button type="button" variant="outline" onClick={handleRequestPasswordReset} disabled={passwordLoading}>
+            {passwordLoading ? "Sending..." : "Send Password Reset Email"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="border-red-200 dark:border-red-900">
+        <CardHeader>
+          <CardTitle className="text-red-600 dark:text-red-400">Danger Zone</CardTitle>
+          <CardDescription>Irreversible actions for your account</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="destructive" onClick={handleDeactivateAccount}>
             Deactivate Account
           </Button>
         </CardContent>

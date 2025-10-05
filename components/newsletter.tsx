@@ -5,7 +5,7 @@ export async function Newsletter() {
   const user = await getCurrentUser()
 
   return (
-    <section className="bg-gray-100 dark:bg-gray-800 py-12">
+    <section className="bg-gray-100 dark:bg-gray-700 py-12 m-12 rounded-lg">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-2xl md:text-3xl font-bold font-serif mb-4 text-black dark:text-white">

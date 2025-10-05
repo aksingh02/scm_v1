@@ -10,7 +10,7 @@ async function LoginContent() {
   const navigationItems = categories.map((c) => c.name)
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
+    <div className="min-h-screen bg-white dark:bg-gray-700">
       <Header navigationItems={navigationItems} />
 
       <main className="container mx-auto px-4 py-16">
