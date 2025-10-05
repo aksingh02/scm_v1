@@ -3,392 +3,312 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { NewsUserProfile } from "@/lib/auth"
-import { useRouter } from "next/navigation"
-import { Separator } from "@/components/ui/separator"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useToast } from "@/hooks/use-toast"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { User, Mail, Lock } from "lucide-react"
 
-function toISODateTime(dateStr: string | undefined | null) {
-  if (!dateStr) return null
-  const d = new Date(dateStr)
-  if (isNaN(d.getTime())) return null
-  return d.toISOString()
+interface SettingsFormProps {
+  user: {
+    id: number
+    firstName: string
+    lastName: string
+    email: string
+    bio?: string
+    profilePictureUrl?: string
+    phoneNumber?: string
+    dateOfBirth?: string
+    location?: string
+    website?: string
+    newsletterSubscribed: boolean
+  }
 }
 
-export default function SettingsForm({ initialUser }: { initialUser: NewsUserProfile }) {
-  const router = useRouter()
-  const [firstName, setFirstName] = useState(initialUser.firstName || "")
-  const [lastName, setLastName] = useState(initialUser.lastName || "")
-  const [bio, setBio] = useState(initialUser.bio || "")
-  const [phoneNumber, setPhoneNumber] = useState(initialUser.phoneNumber || "")
+export default function SettingsForm({ user }: SettingsFormProps) {
+  const [firstName, setFirstName] = useState(user.firstName)
+  const [lastName, setLastName] = useState(user.lastName)
+  const [bio, setBio] = useState(user.bio || "")
+  const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || "")
   const [dateOfBirth, setDateOfBirth] = useState(
-    initialUser.dateOfBirth ? new Date(initialUser.dateOfBirth).toISOString().slice(0, 10) : "",
+    user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split("T")[0] : "",
   )
-  const [location, setLocation] = useState(initialUser.location || "")
-  const [website, setWebsite] = useState(initialUser.website || "")
-  const [newsletterSubscribed, setNewsletterSubscribed] = useState(!!initialUser.newsletterSubscribed)
-  const [profilePictureUrl, setProfilePictureUrl] = useState(initialUser.profilePictureUrl || "")
-  const [saving, setSaving] = useState(false)
-  const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
-  const [uploading, setUploading] = useState(false)
-  const [deactivating, setDeactivating] = useState(false)
+  const [location, setLocation] = useState(user.location || "")
+  const [website, setWebsite] = useState(user.website || "")
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(user.newsletterSubscribed)
+  const [profilePicture, setProfilePicture] = useState<File | null>(null)
+  const [profilePicturePreview, setProfilePicturePreview] = useState(user.profilePictureUrl || "")
+  const [loading, setLoading] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const { toast } = useToast()
+  const router = useRouter()
 
-  // Password change state
-  const [currentPassword, setCurrentPassword] = useState("")
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmNewPassword, setConfirmNewPassword] = useState("")
-  const [changingPassword, setChangingPassword] = useState(false)
-  const [passwordMsg, setPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
-
-  async function onSave(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    setMsg(null)
-    const payload = {
-      firstName,
-      lastName,
-      bio,
-      phoneNumber,
-      dateOfBirth: toISODateTime(dateOfBirth) ?? null,
-      location,
-      website,
-      newsletterSubscribed,
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setProfilePicture(file)
+      setProfilePicturePreview(URL.createObjectURL(file))
     }
-    const res = await fetch("/api/users/profile", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-    const ok = res.ok
-    const data = await res.json().catch(() => ({}))
-    setMsg(
-      ok ? { type: "success", text: "Profile updated." } : { type: "error", text: data?.error || "Update failed." },
-    )
-    setSaving(false)
-    if (ok) router.refresh()
   }
 
-  async function onChangePassword(e: React.FormEvent) {
+  const handleRemoveProfilePicture = async () => {
+    try {
+      const res = await fetch("/api/users/profile/picture", { method: "DELETE" })
+      if (res.ok) {
+        setProfilePicturePreview("")
+        setProfilePicture(null)
+        toast({ title: "Profile picture removed", description: "Your profile picture has been removed successfully." })
+        router.refresh()
+      } else {
+        toast({ title: "Failed to remove picture", variant: "destructive" })
+      }
+    } catch (error) {
+      toast({ title: "Network error", variant: "destructive" })
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setPasswordMsg(null)
-
-    if (newPassword !== confirmNewPassword) {
-      setPasswordMsg({ type: "error", text: "New passwords do not match." })
-      return
-    }
-
-    if (newPassword.length < 6) {
-      setPasswordMsg({ type: "error", text: "Password must be at least 6 characters." })
-      return
-    }
-
-    setChangingPassword(true)
+    setLoading(true)
 
     try {
-      // First, verify current password by attempting signin
-      const verifyRes = await fetch("/api/auth/signin", {
-        method: "POST",
+      // Upload profile picture if changed
+      if (profilePicture) {
+        const formData = new FormData()
+        formData.append("file", profilePicture)
+
+        const uploadRes = await fetch("/api/users/profile/picture", {
+          method: "POST",
+          body: formData,
+        })
+
+        if (!uploadRes.ok) {
+          toast({ title: "Failed to upload profile picture", variant: "destructive" })
+          setLoading(false)
+          return
+        }
+      }
+
+      // Update profile
+      const res = await fetch("/api/users/profile", {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: initialUser.email,
-          password: currentPassword,
-          rememberMe: false,
+          firstName,
+          lastName,
+          bio,
+          phoneNumber,
+          dateOfBirth: dateOfBirth ? new Date(dateOfBirth).toISOString() : null,
+          location,
+          website,
+          newsletterSubscribed,
         }),
       })
 
-      if (!verifyRes.ok) {
-        setPasswordMsg({ type: "error", text: "Current password is incorrect." })
-        setChangingPassword(false)
+      if (!res.ok) {
+        const data = await res.json()
+        toast({ title: "Failed to update profile", description: data.error, variant: "destructive" })
         return
       }
 
-      // Request password reset token
-      const forgotRes = await fetch("/api/auth/forgot-password", {
+      toast({ title: "Profile updated", description: "Your profile has been updated successfully." })
+      router.refresh()
+    } catch (error) {
+      toast({ title: "Network error", description: "Please try again.", variant: "destructive" })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRequestPasswordReset = async () => {
+    setPasswordLoading(true)
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: initialUser.email }),
+        body: JSON.stringify({ email: user.email }),
       })
 
-      if (!forgotRes.ok) {
-        setPasswordMsg({ type: "error", text: "Failed to initiate password change." })
-        setChangingPassword(false)
-        return
-      }
-
-      // Since we can't access the token directly from email in this flow,
-      // we'll use a different approach: direct password update via profile
-      // However, the backend API shown uses token-based reset, so we'll inform user
-      setPasswordMsg({
-        type: "success",
-        text: "Password reset link sent to your email. Please check your inbox.",
-      })
-      setCurrentPassword("")
-      setNewPassword("")
-      setConfirmNewPassword("")
-    } catch {
-      setPasswordMsg({ type: "error", text: "Network error. Please try again." })
-    } finally {
-      setChangingPassword(false)
-    }
-  }
-
-  async function onUploadPic(file: File) {
-    setUploading(true)
-    setMsg(null)
-
-    const formData = new FormData()
-    formData.append("file", file)
-
-    const res = await fetch("/api/users/profile/picture", {
-      method: "POST",
-      body: formData,
-    })
-
-    setUploading(false)
-
-    if (res.ok) {
-      const data = await res.json()
-      setMsg({ type: "success", text: data.message })
-      router.refresh()
-    } else {
-      let errorMsg = "Failed to upload picture."
-      const contentType = res.headers.get("content-type")
-      if (contentType && contentType.includes("application/json")) {
-        const data = await res.json()
-        errorMsg = data?.message || errorMsg
+      if (res.ok) {
+        toast({
+          title: "Password reset email sent",
+          description: "Check your email for a link to reset your password.",
+        })
       } else {
-        const text = await res.text()
-        errorMsg = text || errorMsg
+        toast({ title: "Failed to send reset email", variant: "destructive" })
       }
-      setMsg({ type: "error", text: errorMsg })
+    } catch (error) {
+      toast({ title: "Network error", variant: "destructive" })
+    } finally {
+      setPasswordLoading(false)
     }
   }
 
-  async function onRemovePic() {
-    setUploading(true)
-    setMsg(null)
-    const res = await fetch("/api/users/profile/picture", { method: "DELETE" })
-    setUploading(false)
-    if (res.ok) {
-      setProfilePictureUrl("")
-      setMsg({ type: "success", text: "Profile picture removed." })
-      router.refresh()
-    } else {
-      const data = await res.json().catch(() => ({}))
-      setMsg({ type: "error", text: data?.error || "Failed to remove picture." })
+  const handleDeactivateAccount = async () => {
+    if (
+      !confirm("Are you sure you want to deactivate your account? This action can be reversed by contacting support.")
+    ) {
+      return
     }
-  }
 
-  async function onDeactivate() {
-    if (!confirm("Are you sure you want to deactivate your account?")) return
-    setDeactivating(true)
-    const res = await fetch("/api/users/deactivate", { method: "POST" })
-    setDeactivating(false)
-    if (res.ok) {
-      window.location.href = "/"
-    } else {
-      const data = await res.json().catch(() => ({}))
-      setMsg({ type: "error", text: data?.error || "Failed to deactivate account." })
+    try {
+      const res = await fetch("/api/users/deactivate", { method: "POST" })
+      if (res.ok) {
+        toast({ title: "Account deactivated", description: "Your account has been deactivated." })
+        router.push("/")
+      } else {
+        toast({ title: "Failed to deactivate account", variant: "destructive" })
+      }
+    } catch (error) {
+      toast({ title: "Network error", variant: "destructive" })
     }
   }
 
   return (
-    <div className="space-y-8">
-      {/* Profile Section */}
-      <Card className="border-gray-200 dark:border-gray-700">
+    <div className="space-y-6">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-black dark:text-white">Profile Information</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Profile Information
+          </CardTitle>
+          <CardDescription>Update your personal information and profile picture</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSave} className="space-y-6">
-            {msg && (
-              <div
-                className={`rounded-md p-3 ${msg.type === "success" ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"}`}
-              >
-                {msg.text}
-              </div>
-            )}
-
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    placeholder="First name"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                  />
-                  <Input
-                    placeholder="Last name"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    required
-                  />
-                </div>
-                <Input type="email" value={initialUser.email} readOnly className="bg-gray-50 dark:bg-gray-800" />
-                <Textarea placeholder="Bio" value={bio || ""} onChange={(e) => setBio(e.target.value)} rows={4} />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    placeholder="Phone number"
-                    value={phoneNumber || ""}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                  />
-                  <Input
-                    type="date"
-                    value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
-                    aria-label="Date of birth"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input placeholder="Location" value={location || ""} onChange={(e) => setLocation(e.target.value)} />
-                  <Input placeholder="Website" value={website || ""} onChange={(e) => setWebsite(e.target.value)} />
-                </div>
-
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                  <input
-                    type="checkbox"
-                    checked={newsletterSubscribed}
-                    onChange={(e) => setNewsletterSubscribed(e.target.checked)}
-                    className="h-4 w-4"
-                  />
-                  Subscribe to newsletter
-                </label>
-              </div>
-
-              <div className="space-y-4">
-                <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-3">Profile Picture</p>
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={
-                        profilePictureUrl ||
-                        "/placeholder.svg?height=64&width=64&query=default%20user%20avatar%20placeholder" ||
-                        "/placeholder.svg"
-                      }
-                      alt="Profile"
-                      className="h-16 w-16 rounded-full object-cover border border-gray-200 dark:border-gray-700"
-                    />
-                    <div className="space-x-2">
-                      <label className="inline-block">
-                        <span className="sr-only">Upload</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => e.target.files && e.target.files[0] && onUploadPic(e.target.files[0])}
-                          className="hidden"
-                          id="upload-avatar-input"
-                        />
-                        <Button
-                          variant="outline"
-                          type="button"
-                          onClick={() => document.getElementById("upload-avatar-input")?.click()}
-                          disabled={uploading}
-                        >
-                          {uploading ? "Uploading..." : "Upload"}
-                        </Button>
-                      </label>
-                      <Button variant="ghost" type="button" onClick={onRemovePic} disabled={uploading}>
-                        Remove
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Account</p>
-                  <Button type="button" variant="destructive" onClick={onDeactivate} disabled={deactivating}>
-                    {deactivating ? "Deactivating..." : "Deactivate account"}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex items-center gap-6">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={profilePicturePreview || "/placeholder.svg"} alt={`${firstName} ${lastName}`} />
+                <AvatarFallback className="text-2xl">
+                  {firstName[0]}
+                  {lastName[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div className="space-y-2">
+                <Input type="file" accept="image/*" onChange={handleProfilePictureChange} className="max-w-xs" />
+                {profilePicturePreview && (
+                  <Button type="button" variant="outline" size="sm" onClick={handleRemoveProfilePicture}>
+                    Remove Picture
                   </Button>
-                </div>
+                )}
               </div>
-            </section>
-
-            <div className="flex justify-end">
-              <Button type="submit" disabled={saving}>
-                {saving ? "Saving..." : "Save changes"}
-              </Button>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">First Name</label>
+                <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Last Name</label>
+                <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Bio</label>
+              <Textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Tell us about yourself"
+                rows={4}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Phone Number</label>
+                <Input
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="+1 (555) 123-4567"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Date of Birth</label>
+                <Input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Location</label>
+                <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, Country" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Website</label>
+                <Input
+                  type="url"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder="https://example.com"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="newsletter"
+                checked={newsletterSubscribed}
+                onCheckedChange={(checked) => setNewsletterSubscribed(checked as boolean)}
+              />
+              <label htmlFor="newsletter" className="text-sm">
+                Subscribe to newsletter for latest news and updates
+              </label>
+            </div>
+
+            <Button type="submit" disabled={loading} className="w-full md:w-auto">
+              {loading ? "Saving..." : "Save Changes"}
+            </Button>
           </form>
         </CardContent>
       </Card>
 
-      {/* Password Change Section */}
-      <Card className="border-gray-200 dark:border-gray-700">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-black dark:text-white">Change Password</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Email Address
+          </CardTitle>
+          <CardDescription>Your email address cannot be changed</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onChangePassword} className="space-y-4">
-            {passwordMsg && (
-              <div
-                className={`rounded-md p-3 ${passwordMsg.type === "success" ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"}`}
-              >
-                {passwordMsg.text}
-              </div>
-            )}
+          <Input value={user.email} disabled className="max-w-md" />
+        </CardContent>
+      </Card>
 
-            <div>
-              <label
-                htmlFor="currentPassword"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Current Password
-              </label>
-              <Input
-                id="currentPassword"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-              />
-            </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            Change Password
+          </CardTitle>
+          <CardDescription>Request a password reset link via email</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            For security reasons, we'll send you an email with a link to reset your password.
+          </p>
+          <Button type="button" variant="outline" onClick={handleRequestPasswordReset} disabled={passwordLoading}>
+            {passwordLoading ? "Sending..." : "Send Password Reset Email"}
+          </Button>
+        </CardContent>
+      </Card>
 
-            <Separator className="my-4" />
-
-            <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                New Password
-              </label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                minLength={6}
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="confirmNewPassword"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Confirm New Password
-              </label>
-              <Input
-                id="confirmNewPassword"
-                type="password"
-                value={confirmNewPassword}
-                onChange={(e) => setConfirmNewPassword(e.target.value)}
-                required
-                minLength={6}
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-              />
-            </div>
-
-            <div className="flex justify-end">
-              <Button type="submit" disabled={changingPassword}>
-                {changingPassword ? "Changing..." : "Change Password"}
-              </Button>
-            </div>
-          </form>
+      <Card className="border-red-200 dark:border-red-900">
+        <CardHeader>
+          <CardTitle className="text-red-600 dark:text-red-400">Danger Zone</CardTitle>
+          <CardDescription>Irreversible actions for your account</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="destructive" onClick={handleDeactivateAccount}>
+            Deactivate Account
+          </Button>
         </CardContent>
       </Card>
     </div>

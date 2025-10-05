@@ -2,44 +2,59 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 
 export default function RegisterForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const prefilledEmail = searchParams.get("email") || ""
-  const prefilledNewsletter = searchParams.get("newsletter") === "true"
-
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
-  const [email, setEmail] = useState(prefilledEmail)
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [agreeToTerms, setAgreeToTerms] = useState(false)
-  const [subscribeToNewsletter, setSubscribeToNewsletter] = useState(prefilledNewsletter)
+  const [subscribeToNewsletter, setSubscribeToNewsletter] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const router = useRouter()
+  const { toast } = useToast()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    if (prefilledEmail) setEmail(prefilledEmail)
-    if (prefilledNewsletter) setSubscribeToNewsletter(true)
-  }, [prefilledEmail, prefilledNewsletter])
+    const emailParam = searchParams.get("email")
+    const newsletterParam = searchParams.get("newsletter")
 
-  async function handleSubmit(e: React.FormEvent) {
+    if (emailParam) {
+      setEmail(emailParam)
+    }
+    if (newsletterParam === "true") {
+      setSubscribeToNewsletter(true)
+    }
+  }, [searchParams])
+
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
-    setLoading(true)
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      setLoading(false)
+      toast({
+        title: "Passwords do not match",
+        description: "Please ensure both passwords are the same.",
+        variant: "destructive",
+      })
       return
     }
 
+    if (!agreeToTerms) {
+      toast({
+        title: "Terms required",
+        description: "You must agree to the terms and conditions.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setLoading(true)
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
@@ -57,28 +72,28 @@ export default function RegisterForm() {
 
       const data = await res.json()
 
-      if (res.ok) {
-        // Redirect to login page after successful registration
-        router.push("/login?registered=true")
-      } else {
-        setError(data.error || data.message || "Registration failed")
+      if (!res.ok) {
+        toast({ title: "Registration failed", description: data.error || "An error occurred", variant: "destructive" })
+        return
       }
-    } catch {
-      setError("Network error. Please try again.")
+
+      toast({
+        title: "Registration successful!",
+        description: "Please check your email to verify your account.",
+      })
+
+      // Redirect to login page with registered flag
+      router.push("/login?registered=true")
+    } catch (err) {
+      toast({ title: "Network error", description: "Please try again.", variant: "destructive" })
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-400">
-          {error}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form className="space-y-6" onSubmit={onSubmit}>
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             First Name
@@ -86,10 +101,11 @@ export default function RegisterForm() {
           <Input
             id="firstName"
             type="text"
+            required
+            className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+            placeholder="John"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            required
-            className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
           />
         </div>
         <div>
@@ -99,10 +115,11 @@ export default function RegisterForm() {
           <Input
             id="lastName"
             type="text"
+            required
+            className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+            placeholder="Doe"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            required
-            className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
           />
         </div>
       </div>
@@ -114,10 +131,11 @@ export default function RegisterForm() {
         <Input
           id="email"
           type="email"
+          required
+          className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+          placeholder="john.doe@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
-          className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
         />
       </div>
 
@@ -128,10 +146,11 @@ export default function RegisterForm() {
         <Input
           id="password"
           type="password"
+          required
+          className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+          placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          required
-          className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
         />
       </div>
 
@@ -142,58 +161,53 @@ export default function RegisterForm() {
         <Input
           id="confirmPassword"
           type="password"
+          required
+          className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+          placeholder="Confirm your password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
         />
       </div>
 
-      <div className="flex items-start space-x-2">
-        <Checkbox id="terms" checked={agreeToTerms} onCheckedChange={(checked) => setAgreeToTerms(checked === true)} />
-        <label
-          htmlFor="terms"
-          className="text-sm text-gray-700 dark:text-gray-300 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          I agree to the{" "}
-          <Link href="/terms" className="underline hover:text-gray-900 dark:hover:text-white">
-            Terms of Service
-          </Link>{" "}
-          and{" "}
-          <Link href="/privacy" className="underline hover:text-gray-900 dark:hover:text-white">
-            Privacy Policy
-          </Link>
-        </label>
-      </div>
+      <div className="space-y-4">
+        <div className="flex items-start">
+          <Checkbox
+            id="agreeToTerms"
+            checked={agreeToTerms}
+            onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
+            className="mt-1"
+          />
+          <label htmlFor="agreeToTerms" className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+            I agree to the{" "}
+            <a href="/terms" className="text-black dark:text-white hover:underline">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="/privacy" className="text-black dark:text-white hover:underline">
+              Privacy Policy
+            </a>
+          </label>
+        </div>
 
-      <div className="flex items-start space-x-2">
-        <Checkbox
-          id="newsletter"
-          checked={subscribeToNewsletter}
-          onCheckedChange={(checked) => setSubscribeToNewsletter(checked === true)}
-        />
-        <label
-          htmlFor="newsletter"
-          className="text-sm text-gray-700 dark:text-gray-300 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          Subscribe to our newsletter for the latest updates
-        </label>
+        <div className="flex items-start">
+          <Checkbox
+            id="subscribeToNewsletter"
+            checked={subscribeToNewsletter}
+            onCheckedChange={(checked) => setSubscribeToNewsletter(checked as boolean)}
+            className="mt-1"
+          />
+          <label htmlFor="subscribeToNewsletter" className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+            Subscribe to our newsletter for the latest news and updates
+          </label>
+        </div>
       </div>
 
       <Button
-        type="submit"
-        disabled={loading}
         className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+        disabled={loading}
       >
         {loading ? "Creating Account..." : "Create Account"}
       </Button>
-
-      <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-        Already have an account?{" "}
-        <Link href="/login" className="font-medium text-black dark:text-white hover:underline">
-          Log in
-        </Link>
-      </p>
     </form>
   )
 }

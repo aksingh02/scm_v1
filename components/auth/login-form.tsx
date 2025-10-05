@@ -1,9 +1,8 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -16,6 +15,16 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get("registered") === "true") {
+      toast({
+        title: "Registration successful!",
+        description: "Please check your email to verify your account, then log in.",
+      })
+    }
+  }, [searchParams, toast])
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,6 +51,7 @@ export default function LoginForm() {
 
       toast({ title: "Welcome back!", description: "You have signed in successfully." })
       router.push("/")
+      router.refresh()
     } catch (err) {
       toast({ title: "Network error", description: "Please try again.", variant: "destructive" })
     } finally {

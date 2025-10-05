@@ -3,208 +3,114 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Input } from "@/components/ui/input"
-import {
-  Menu,
-  Search,
-  Home,
-  Globe,
-  Building,
-  TrendingUp,
-  Gamepad2,
-  Film,
-  Smartphone,
-  Heart,
-  Microscope,
-} from "lucide-react"
-import Link from "next/link"
-import { ThemeToggle } from "./theme-toggle"
 import { useRouter } from "next/navigation"
+import { Menu, ChevronDown } from "lucide-react"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { ThemeToggle } from "@/components/theme-toggle"
+import Link from "next/link"
 
 interface MobileNavProps {
-  navigationItems?: string[]
+  navigationItems: string[]
 }
 
-const categoryIcons = {
-  Home: Home,
-  World: Globe,
-  Politics: Building,
-  Business: Building,
-  Economics: TrendingUp,
-  Sports: Gamepad2,
-  Entertainment: Film,
-  Tech: Smartphone,
-  Health: Heart,
-  Science: Microscope,
+interface User {
+  newsletterSubscribed?: boolean
 }
 
-export function MobileNav({ navigationItems = [] }: MobileNavProps) {
-  const router = useRouter()
+export function MobileNav({ navigationItems }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [newsletterEmail, setNewsletterEmail] = useState("")
-  const [user, setUser] = useState<any>(null)
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
+  const [email, setEmail] = useState("")
+  const [user, setUser] = useState<User | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     fetch("/api/auth/session")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.user) setUser(data.user)
-      })
-      .catch(() => {})
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setUser(data))
+      .catch(() => setUser(null))
   }, [])
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault()
-    if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
+    if (email) {
       setIsOpen(false)
-    }
-  }
-
-  const handleLinkClick = () => {
-    setIsOpen(false)
-  }
-
-  const handleNewsletterSubscribe = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (newsletterEmail.trim()) {
-      router.push(`/register?email=${encodeURIComponent(newsletterEmail)}&newsletter=true`)
-      setIsOpen(false)
+      router.push(`/register?email=${encodeURIComponent(email)}&newsletter=true`)
     }
   }
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="md:hidden">
-          <Menu className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="lg:hidden">
+          <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-80 p-0 bg-white dark:bg-gray-900">
+      <SheetContent side="left" className="w-full sm:w-96 overflow-y-auto">
         <div className="flex flex-col h-full">
-          <SheetHeader className="p-6 border-b border-gray-200 dark:border-gray-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <SheetTitle className="text-xl font-bold font-serif text-black dark:text-white">
-                  SylphCorps Media
-                </SheetTitle>
-                <p className="text-xs text-gray-600 dark:text-gray-400 italic mt-1">Innovating Tomorrow's News Today</p>
-              </div>
-              <ThemeToggle />
-            </div>
-          </SheetHeader>
-
-          {/* Search Section */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-            <form onSubmit={handleSearch} className="flex gap-2">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Search news..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-                />
-              </div>
-              <Button
-                type="submit"
-                size="sm"
-                className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-            </form>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold font-serif">Menu</h2>
+            <ThemeToggle />
           </div>
 
-          {/* Navigation Links */}
-          <nav className="flex-1 overflow-y-auto">
-            <div className="p-4">
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-                Categories
-              </h3>
-              <div className="space-y-2">
-                {navigationItems.map((item) => {
-                  const IconComponent = categoryIcons[item as keyof typeof categoryIcons] || Home
-                  const href = item === "Home" ? "/" : `/${item.toLowerCase()}`
+          <nav className="flex-1 space-y-2">
+            <Link
+              href="/"
+              className="block px-4 py-2 text-lg hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+              onClick={() => setIsOpen(false)}
+            >
+              Home
+            </Link>
 
-                  return (
+            {navigationItems.map((item) => (
+              <div key={item}>
+                <button
+                  className="w-full flex items-center justify-between px-4 py-2 text-lg hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                  onClick={() => setExpandedCategory(expandedCategory === item ? null : item)}
+                >
+                  {item}
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${expandedCategory === item ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {expandedCategory === item && (
+                  <div className="ml-4 mt-2 space-y-2">
                     <Link
-                      key={item}
-                      href={href}
-                      onClick={handleLinkClick}
-                      className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white transition-colors"
+                      href={`/${item.toLowerCase()}`}
+                      className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                      onClick={() => setIsOpen(false)}
                     >
-                      <IconComponent className="h-5 w-5" />
-                      <span className="font-medium">{item}</span>
+                      All {item}
                     </Link>
-                  )
-                })}
+                  </div>
+                )}
               </div>
-            </div>
-
-            {/* Quick Links */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-                Quick Links
-              </h3>
-              <div className="space-y-2">
-                <Link
-                  href="/subscribe"
-                  onClick={handleLinkClick}
-                  className="block px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white transition-colors"
-                >
-                  Subscribe
-                </Link>
-                <Link
-                  href="/login"
-                  onClick={handleLinkClick}
-                  className="block px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white transition-colors"
-                >
-                  Log In
-                </Link>
-                <Link
-                  href="/about"
-                  onClick={handleLinkClick}
-                  className="block px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white transition-colors"
-                >
-                  About Us
-                </Link>
-                <Link
-                  href="/contact"
-                  onClick={handleLinkClick}
-                  className="block px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white transition-colors"
-                >
-                  Contact
-                </Link>
-              </div>
-            </div>
+            ))}
           </nav>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
-            {user && user.newsletterSubscribed ? (
-              <>
-                <p className="text-sm text-center text-gray-700 dark:text-gray-300 mb-3">
-                  ✓ You're subscribed to our newsletter
-                </p>
-                <Link href="/account/settings" onClick={handleLinkClick}>
-                  <Button variant="outline" className="w-full border-gray-300 dark:border-gray-600 bg-transparent">
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+            <h3 className="text-lg font-semibold mb-4">Newsletter</h3>
+            {user?.newsletterSubscribed ? (
+              <div className="space-y-3">
+                <div className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded text-sm text-center">
+                  ✓ Subscribed
+                </div>
+                <Link href="/account/settings" onClick={() => setIsOpen(false)}>
+                  <Button variant="outline" className="w-full bg-transparent">
                     Manage Preferences
                   </Button>
                 </Link>
-              </>
+              </div>
             ) : (
-              <form onSubmit={handleNewsletterSubscribe}>
+              <form onSubmit={handleSubscribe} className="space-y-3">
                 <Input
                   type="email"
-                  placeholder="Enter your email"
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  className="mb-2 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                  placeholder="Enter your email address"
+                  className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
                 <Button
@@ -215,7 +121,6 @@ export function MobileNav({ navigationItems = [] }: MobileNavProps) {
                 </Button>
               </form>
             )}
-            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-3">© 2025 SylphCorps Media</p>
           </div>
         </div>
       </SheetContent>
