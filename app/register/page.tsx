@@ -39,14 +39,14 @@ async function RegisterPageContent() {
 
             <Separator />
 
-            <div className="text-center space-y-2">
+            {/* <div className="text-center space-y-2">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Already have an account?{" "}
                 <Link href="/login" className="text-blue-600 hover:underline font-medium">
                   Sign in here
                 </Link>
               </p>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 

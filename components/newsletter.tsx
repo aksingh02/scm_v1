@@ -17,7 +17,7 @@ export function Newsletter() {
             className="flex-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
           />
           <Button className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200">
-            Subscribe
+            Subscribe to Newsletter
           </Button>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">

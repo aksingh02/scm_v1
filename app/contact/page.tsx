@@ -112,8 +112,9 @@ async function ContactPageContent() {
                   <div>
                     <h3 className="font-semibold text-black dark:text-white mb-2">Email</h3>
                     <p className="text-gray-600 dark:text-gray-400">business@sylphcorpsmedia.com</p>
-                    <p className="text-gray-600 dark:text-gray-400">careers@sylphcorpsmedia.com</p>
+                    <p className="text-gray-600 dark:text-gray-400">newsletter@sylphcorpsmedia.com</p>
                     <p className="text-gray-600 dark:text-gray-400">support@sylphcorpsmedia.com</p>
+                    <p className="text-gray-600 dark:text-gray-400">admin@sylphcorpsmedia.com</p>
                   </div>
                 </div>
 
@@ -160,7 +161,7 @@ async function ContactPageContent() {
               <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <h3 className="font-semibold text-black dark:text-white mb-3">News Tips</h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Have a story tip or breaking news? Contact our newsroom directly at tips@sylphcorpsmedia.com or call our
+                  Have a story tip or breaking news? Contact our newsroom directly at newsletter@sylphcorpsmedia.com or call our
                   24/7 tip line at +91 7042954064. We protect the confidentiality of our sources.
                 </p>
               </div>

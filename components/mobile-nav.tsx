@@ -171,7 +171,7 @@ export function MobileNav({ navigationItems = [] }: MobileNavProps) {
             >
               Subscribe to Newsletter
             </Button>
-            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-3">© 2024 SylphCorps Media</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-3">© 2025 SylphCorps Media</p>
           </div>
         </div>
       </SheetContent>

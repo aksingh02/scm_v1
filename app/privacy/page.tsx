@@ -211,7 +211,7 @@ async function PrivacyPageContent() {
                 </p>
                 <div className="space-y-2 text-gray-700 dark:text-gray-300">
                   <p>
-                    <strong>Email:</strong> admin@sylphcorps.media
+                    <strong>Email:</strong> admin@sylphcorpsmedia.com
                   </p>
                   <p>
                     <strong>Phone:</strong> +91 7042954064

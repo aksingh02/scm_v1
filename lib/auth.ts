@@ -1,5 +1,4 @@
 import { cookies } from "next/headers"
-import type { HeadersInit } from "next/dist/server/web/spec-extension/adapters/headers"
 import { API_BASE_URL } from "@/lib/api"
 
 export const AUTH_COOKIE = "scm_token"
