@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
@@ -12,26 +11,15 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User, Mail, Lock } from "lucide-react"
+import type { NewsUserProfile } from "@/lib/auth"
 
 interface SettingsFormProps {
-  user: {
-    id: number
-    firstName: string
-    lastName: string
-    email: string
-    bio?: string
-    profilePictureUrl?: string
-    phoneNumber?: string
-    dateOfBirth?: string
-    location?: string
-    website?: string
-    newsletterSubscribed: boolean
-  }
+  user: NewsUserProfile
 }
 
 export default function SettingsForm({ user }: SettingsFormProps) {
-  const [firstName, setFirstName] = useState(user.firstName)
-  const [lastName, setLastName] = useState(user.lastName)
+  const [firstName, setFirstName] = useState(user.firstName || "")
+  const [lastName, setLastName] = useState(user.lastName || "")
   const [bio, setBio] = useState(user.bio || "")
   const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || "")
   const [dateOfBirth, setDateOfBirth] = useState(
@@ -39,7 +27,7 @@ export default function SettingsForm({ user }: SettingsFormProps) {
   )
   const [location, setLocation] = useState(user.location || "")
   const [website, setWebsite] = useState(user.website || "")
-  const [newsletterSubscribed, setNewsletterSubscribed] = useState(user.newsletterSubscribed)
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(user.newsletterSubscribed || false)
   const [profilePicture, setProfilePicture] = useState<File | null>(null)
   const [profilePicturePreview, setProfilePicturePreview] = useState(user.profilePictureUrl || "")
   const [loading, setLoading] = useState(false)
@@ -168,6 +156,8 @@ export default function SettingsForm({ user }: SettingsFormProps) {
     }
   }
 
+  const userInitials = `${firstName?.[0] || ""}${lastName?.[0] || ""}`
+
   return (
     <div className="space-y-6">
       <Card>
@@ -183,10 +173,7 @@ export default function SettingsForm({ user }: SettingsFormProps) {
             <div className="flex items-center gap-6">
               <Avatar className="h-24 w-24">
                 <AvatarImage src={profilePicturePreview || "/placeholder.svg"} alt={`${firstName} ${lastName}`} />
-                <AvatarFallback className="text-2xl">
-                  {firstName[0]}
-                  {lastName[0]}
-                </AvatarFallback>
+                <AvatarFallback className="text-2xl">{userInitials}</AvatarFallback>
               </Avatar>
               <div className="space-y-2">
                 <Input type="file" accept="image/*" onChange={handleProfilePictureChange} className="max-w-xs" />

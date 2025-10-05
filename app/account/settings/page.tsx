@@ -24,7 +24,7 @@ async function SettingsContent() {
             <h1 className="text-3xl md:text-4xl font-bold font-serif text-black dark:text-white">Account Settings</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">Manage your profile and preferences</p>
           </header>
-          <SettingsForm initialUser={user} />
+          <SettingsForm user={user} />
         </div>
       </main>
 

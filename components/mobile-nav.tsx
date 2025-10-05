@@ -4,36 +4,31 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Menu, ChevronDown } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ThemeToggle } from "@/components/theme-toggle"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
+import { Menu, X } from "lucide-react"
 
 interface MobileNavProps {
   navigationItems: string[]
 }
 
-interface User {
-  newsletterSubscribed?: boolean
-}
-
 export function MobileNav({ navigationItems }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
   const [email, setEmail] = useState("")
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<any>(null)
   const router = useRouter()
 
   useEffect(() => {
     fetch("/api/auth/session")
-      .then((r) => (r.ok ? r.json() : null))
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => setUser(data))
       .catch(() => setUser(null))
   }, [])
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (email) {
       setIsOpen(false)
@@ -44,74 +39,67 @@ export function MobileNav({ navigationItems }: MobileNavProps) {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="lg:hidden">
+        <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-full sm:w-96 overflow-y-auto">
+      <SheetContent side="left" className="w-[300px] sm:w-[400px]">
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold font-serif">Menu</h2>
-            <ThemeToggle />
+            <Link href="/" className="text-2xl font-bold font-serif" onClick={() => setIsOpen(false)}>
+              SCM News
+            </Link>
+            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} aria-label="Close menu">
+              <X className="h-6 w-6" />
+            </Button>
           </div>
 
-          <nav className="flex-1 space-y-2">
+          <nav className="flex-1 space-y-4">
             <Link
               href="/"
-              className="block px-4 py-2 text-lg hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+              className="block py-2 text-lg hover:text-gray-600 dark:hover:text-gray-300"
               onClick={() => setIsOpen(false)}
             >
               Home
             </Link>
-
             {navigationItems.map((item) => (
-              <div key={item}>
-                <button
-                  className="w-full flex items-center justify-between px-4 py-2 text-lg hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-                  onClick={() => setExpandedCategory(expandedCategory === item ? null : item)}
-                >
-                  {item}
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform ${expandedCategory === item ? "rotate-180" : ""}`}
-                  />
-                </button>
-                {expandedCategory === item && (
-                  <div className="ml-4 mt-2 space-y-2">
-                    <Link
-                      href={`/${item.toLowerCase()}`}
-                      className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      All {item}
-                    </Link>
-                  </div>
-                )}
-              </div>
+              <Link
+                key={item}
+                href={`/${item.toLowerCase().replace(/\s+/g, "-")}`}
+                className="block py-2 text-lg hover:text-gray-600 dark:hover:text-gray-300"
+                onClick={() => setIsOpen(false)}
+              >
+                {item}
+              </Link>
             ))}
           </nav>
 
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
-            <h3 className="text-lg font-semibold mb-4">Newsletter</h3>
+          <Separator className="my-6" />
+
+          <div className="space-y-4">
+            <h3 className="font-semibold text-sm text-gray-500 dark:text-gray-400">
+              {user?.newsletterSubscribed ? "Newsletter" : "Stay Updated"}
+            </h3>
             {user?.newsletterSubscribed ? (
-              <div className="space-y-3">
-                <div className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded text-sm text-center">
-                  ✓ Subscribed
-                </div>
-                <Link href="/account/settings" onClick={() => setIsOpen(false)}>
-                  <Button variant="outline" className="w-full bg-transparent">
-                    Manage Preferences
-                  </Button>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="mb-2">✓ You're subscribed to our newsletter</p>
+                <Link
+                  href="/account/settings"
+                  className="text-black dark:text-white hover:underline font-medium"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Manage preferences →
                 </Link>
               </div>
             ) : (
-              <form onSubmit={handleSubscribe} className="space-y-3">
+              <form onSubmit={handleNewsletterSubmit} className="space-y-3">
                 <Input
                   type="email"
                   placeholder="Enter your email address"
-                  className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
                 />
                 <Button
                   type="submit"

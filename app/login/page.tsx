@@ -1,63 +1,26 @@
+import { Suspense } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { getAllCategories } from "@/lib/data"
-import Link from "next/link"
-import { Suspense } from "react"
 import { PageSkeleton } from "@/components/loading/page-skeleton"
 import LoginForm from "@/components/auth/login-form"
 
-async function LoginPageContent() {
+async function LoginContent() {
   const categories = await getAllCategories()
-  const navigationItems = categories.map((category) => category.name)
+  const navigationItems = categories.map((c) => c.name)
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
       <Header navigationItems={navigationItems} />
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-700">
-            <header className="mb-8 text-center">
-              <h1 className="text-3xl font-bold font-serif text-black dark:text-white mb-2">Welcome Back</h1>
-              <p className="text-gray-600 dark:text-gray-400">Sign in to your SylphCorps Media account</p>
-            </header>
+          <header className="text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold font-serif text-black dark:text-white mb-2">Welcome Back</h1>
+            <p className="text-gray-600 dark:text-gray-400">Sign in to your account to continue</p>
+          </header>
 
-            <LoginForm />
-
-            <div className="mt-6">
-              <Separator className="my-4" />
-              <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                Don't have an account?{" "}
-                <Link href="/register" className="text-black dark:text-white hover:underline font-medium">
-                  Create one here
-                </Link>
-              </p>
-            </div>
-
-            <div className="mt-6 text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                By signing in, you agree to our{" "}
-                <Link href="/terms" className="hover:underline">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href="/privacy" className="hover:underline">
-                  Privacy Policy
-                </Link>
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-8 text-center">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">New to SylphCorps Media?</p>
-            <Link href="/subscribe">
-              <Button variant="outline" className="border-gray-300 dark:border-gray-600 bg-transparent">
-                Start Your Subscription
-              </Button>
-            </Link>
-          </div>
+          <LoginForm />
         </div>
       </main>
 
@@ -69,7 +32,7 @@ async function LoginPageContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <LoginPageContent />
+      <LoginContent />
     </Suspense>
   )
 }
