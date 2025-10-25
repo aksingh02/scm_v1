@@ -160,13 +160,6 @@ export function MobileNav({ navigationItems = [] }: MobileNavProps) {
                   Subscribe
                 </Link>
                 <Link
-                  href="/login"
-                  onClick={handleLinkClick}
-                  className="block px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white transition-colors"
-                >
-                  Log In
-                </Link>
-                <Link
                   href="/about"
                   onClick={handleLinkClick}
                   className="block px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white transition-colors"
@@ -188,7 +181,7 @@ export function MobileNav({ navigationItems = [] }: MobileNavProps) {
           <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
             {user && user.newsletterSubscribed ? (
               <div className="space-y-3">
-                <p className="text-sm text-center text-gray-700 dark:text-gray-300">
+                <p className="text-sm text-center text-gray-700 dark:text-gray-300 mb-3">
                   ✓ You're subscribed to our newsletter
                 </p>
                 <Link href="/account/settings" onClick={handleLinkClick}>

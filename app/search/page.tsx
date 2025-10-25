@@ -12,22 +12,39 @@ interface SearchPageProps {
 }
 
 async function SearchPageContent({ searchParams }: SearchPageProps) {
-  const { q: query } = await searchParams
+  try {
+    const resolvedParams = await searchParams
+    const query = resolvedParams?.q || ""
 
-  const [categories, articles] = await Promise.all([
-    getAllCategories(),
-    query ? searchArticlesData(query) : Promise.resolve([]),
-  ])
+    const [categories, articles] = await Promise.all([
+      getAllCategories(),
+      query ? searchArticlesData(query) : Promise.resolve([]),
+    ])
 
-  const navigationItems = categories.map((category) => category.name)
+    const navigationItems = categories.map((category) => category.name)
 
-  return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
-      <Header navigationItems={navigationItems} />
-      <SearchResults initialQuery={query || ""} initialResults={articles} />
-      <Footer />
-    </div>
-  )
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
+        <Header navigationItems={navigationItems} />
+        <SearchResults initialQuery={query} initialResults={articles} />
+        <Footer />
+      </div>
+    )
+  } catch (error) {
+    console.error("Error in SearchPageContent:", error)
+    
+    // Fallback to empty state if there's an error
+    const categories = await getAllCategories().catch(() => [])
+    const navigationItems = categories.map((category) => category.name)
+    
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
+        <Header navigationItems={navigationItems} />
+        <SearchResults initialQuery="" initialResults={[]} />
+        <Footer />
+      </div>
+    )
+  }
 }
 
 export default function SearchPage({ searchParams }: SearchPageProps) {
