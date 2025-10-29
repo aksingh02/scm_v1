@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
+import { formatDate } from "@/lib/data"
 
 interface Article {
   title: string
@@ -115,7 +116,7 @@ export function RecentArticlesClient({ initialArticles }: RecentArticlesClientPr
                       {article.category}
                     </span>
                     <span>•</span>
-                    <span>{article.publishedAt}</span>
+                    <span>{formatDate(article.publishedAt)}</span>
                   </div>
                   <h3 className="text-lg font-bold font-serif text-black dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors leading-tight">
                     {article.title}

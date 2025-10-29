@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Link from "next/link"
+import { formatDate } from "@/lib/data"
 
 interface FeaturedArticleProps {
   article: {
@@ -29,7 +30,7 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
               {article.category}
             </span>
             <span>•</span>
-            <span>{article.publishedAt}</span>
+            <span>{formatDate(article.publishedAt)}</span>
             <span>•</span>
             <span>{article.readTime}</span>
           </div>

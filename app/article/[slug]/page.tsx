@@ -9,11 +9,49 @@ import Image from "next/image"
 import Link from "next/link"
 import { Suspense } from "react"
 import ArticleLoading from "./loading"
+import type { Metadata } from "next"
 
 interface ArticlePageProps {
   params: Promise<{
     slug: string
   }>
+}
+
+export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
+  const { slug } = await params
+  const article = await getArticleBySlug(slug)
+
+  if (!article) {
+    return {
+      title: "Article Not Found",
+    }
+  }
+
+  return {
+    title: `${article.title} | SylphCorps Media`,
+    description: article.summary,
+    openGraph: {
+      title: article.title,
+      description: article.summary,
+      type: "article",
+      publishedTime: article.publishedAt,
+      authors: [article.author.name],
+      images: [
+        {
+          url: article.image,
+          width: 1200,
+          height: 630,
+          alt: article.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description: article.summary,
+      images: [article.image],
+    },
+  }
 }
 
 async function ArticlePageContent({ params }: ArticlePageProps) {
@@ -109,17 +147,10 @@ async function ArticlePageContent({ params }: ArticlePageProps) {
 
           {relatedArticles.length > 0 && (
             <section>
-              <h2 className="text-2xl font-bold font-serif text-black dark:text-white mb-6">
-                Related Articles
-              </h2>
+              <h2 className="text-2xl font-bold font-serif text-black dark:text-white mb-6">Related Articles</h2>
               <div className="grid md:grid-cols-3 gap-6">
                 {relatedArticles.map((relatedArticle) => (
-                  // key must be on the top-most element returned by map
-                  <Link
-                    key={relatedArticle.id} // ✅ key moved here
-                    href={`/article/${relatedArticle.slug}`}
-                    className="block" // makes the link cover the card
-                  >
+                  <Link key={relatedArticle.id} href={`/article/${relatedArticle.slug}`} className="block">
                     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
                       <div className="aspect-video relative">
                         <Image
@@ -134,7 +165,6 @@ async function ArticlePageContent({ params }: ArticlePageProps) {
                           {relatedArticle.category}
                         </Badge>
                         <h3 className="font-semibold mb-2 line-clamp-2">
-                          {/* ✅ removed inner <Link> */}
                           <span className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                             {relatedArticle.title}
                           </span>
@@ -149,7 +179,6 @@ async function ArticlePageContent({ params }: ArticlePageProps) {
               </div>
             </section>
           )}
-
         </div>
       </article>
 

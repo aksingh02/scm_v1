@@ -1,5 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
+import { formatDate } from "@/utils/date" // Assuming formatDate is imported from a utils file
 
 interface Article {
   title: string
@@ -47,7 +48,7 @@ export function RecentArticles({ articles }: RecentArticlesProps) {
                       {article.category}
                     </span>
                     <span>•</span>
-                    <span>{article.publishedAt}</span>
+                    <span>{formatDate(article.publishedAt)}</span>
                   </div>
                   <h3 className="text-lg font-bold font-serif text-black dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors leading-tight">
                     {article.title}
