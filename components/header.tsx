@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Search, LogOut, SettingsIcon, UserIcon } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 import { MobileNav } from "./mobile-nav"
 import { ThemeToggle } from "./theme-toggle"
 import {
@@ -36,6 +37,7 @@ interface SessionState {
 
 export function Header({ navigationItems = [] }: HeaderProps) {
   const [session, setSession] = useState<SessionState>({ loading: true, authenticated: false, user: null })
+  const pathname = usePathname()
 
   useEffect(() => {
     let mounted = true
@@ -65,6 +67,20 @@ export function Header({ navigationItems = [] }: HeaderProps) {
   }
 
   const userInitials = session.user?.fullName?.[0] || session.user?.firstName?.[0] || session.user?.email?.[0] || ""
+
+  const getActiveCategorySlug = () => {
+    const parts = pathname.split("/")
+    if (
+      parts.length > 1 &&
+      parts[1] !== "" &&
+      !["login", "register", "search", "article", "account", "subscribe", "advertise", "about"].includes(parts[1])
+    ) {
+      return parts[1].toLowerCase()
+    }
+    return null
+  }
+
+  const activeCategorySlug = getActiveCategorySlug()
 
   return (
     <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
@@ -187,19 +203,31 @@ export function Header({ navigationItems = [] }: HeaderProps) {
           <div className="hidden md:flex items-center space-x-8 py-4 overflow-x-auto">
             <Link
               href="/"
-              className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors whitespace-nowrap"
+              className={`text-sm font-medium transition-colors whitespace-nowrap ${
+                pathname === "/"
+                  ? "text-black dark:text-white border-b-2 border-black dark:border-white"
+                  : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
+              }`}
             >
               Home
             </Link>
-            {navigationItems.map((item) => (
-              <Link
-                key={item}
-                href={`/${item.toLowerCase()}`}
-                className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors whitespace-nowrap"
-              >
-                {item}
-              </Link>
-            ))}
+            {navigationItems.map((item) => {
+              const itemSlug = item.toLowerCase()
+              const isActive = activeCategorySlug === itemSlug
+              return (
+                <Link
+                  key={item}
+                  href={`/${itemSlug}`}
+                  className={`text-sm font-medium transition-colors whitespace-nowrap ${
+                    isActive
+                      ? "text-black dark:text-white border-b-2 border-black dark:border-white"
+                      : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
+                  }`}
+                >
+                  {item}
+                </Link>
+              )
+            })}
           </div>
         </div>
       </nav>

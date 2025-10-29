@@ -4,7 +4,8 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { getTimeAgo, type Article, type Category, getArticlesByCategory } from "@/lib/data"
+import { getTimeAgo, type Article, type Category } from "@/lib/data"
+import { fetchArticlesByCategoryDirect } from "@/lib/api"
 import Image from "next/image"
 import Link from "next/link"
 import { Loader2 } from "lucide-react"
@@ -19,22 +20,47 @@ export function CategoryPageClient({ category, initialArticles, categorySlug }: 
   const [articles, setArticles] = useState<Article[]>(initialArticles)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialArticles.length >= 12)
+  const [currentPage, setCurrentPage] = useState(1)
 
   const loadMoreArticles = async () => {
     if (loading) return
 
     setLoading(true)
     try {
-      const newArticles = await getArticlesByCategory(categorySlug, 12)
-      // Filter out articles we already have
-      const filteredNewArticles = newArticles.filter(
-        (newArticle) => !articles.some((existingArticle) => existingArticle.id === newArticle.id),
-      )
+      const response = await fetchArticlesByCategoryDirect(categorySlug, currentPage, 12)
 
-      if (filteredNewArticles.length === 0) {
+      if (response.content.length === 0) {
         setHasMore(false)
       } else {
-        setArticles((prev) => [...prev, ...filteredNewArticles])
+        // Transform API articles to Article interface
+        const newArticles = response.content.map((apiArticle) => ({
+          id: apiArticle.id.toString(),
+          title: apiArticle.title,
+          slug: apiArticle.slug,
+          summary: apiArticle.excerpt,
+          content: apiArticle.content,
+          image: apiArticle.imageUrl,
+          category: apiArticle.categories[0]?.name || "General",
+          author: {
+            name: apiArticle.author.fullName,
+            bio: apiArticle.author.bio,
+            avatar: "/placeholder.svg?height=50&width=50",
+          },
+          publishedAt: apiArticle.publishedAt,
+          readTime: `${Math.ceil(apiArticle.content.split(" ").length / 200)} min read`,
+          tags: apiArticle.tags,
+          featured: apiArticle.featured,
+          trending: apiArticle.trending,
+          viewCount: apiArticle.viewCount,
+          likeCount: apiArticle.likeCount,
+        }))
+
+        setArticles((prev) => [...prev, ...newArticles])
+        setCurrentPage((prev) => prev + 1)
+
+        if (response.last) {
+          setHasMore(false)
+        }
       }
     } catch (error) {
       console.error("Error loading more articles:", error)
@@ -47,19 +73,13 @@ export function CategoryPageClient({ category, initialArticles, categorySlug }: 
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold font-serif text-black dark:text-white mb-4">
-          {category.name}
-        </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-          {category.description}
-        </p>
+        <h1 className="text-4xl md:text-5xl font-bold font-serif text-black dark:text-white mb-4">{category.name}</h1>
+        <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">{category.description}</p>
       </div>
 
       {articles.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400 text-lg">
-            No articles found in this category yet.
-          </p>
+          <p className="text-gray-600 dark:text-gray-400 text-lg">No articles found in this category yet.</p>
         </div>
       ) : (
         <>
@@ -95,9 +115,7 @@ export function CategoryPageClient({ category, initialArticles, categorySlug }: 
                         {article.title}
                       </span>
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">
-                      {article.summary}
-                    </p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">{article.summary}</p>
                     <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                       <span>By {article.author.name}</span>
                       <span>{article.readTime}</span>

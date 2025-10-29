@@ -1,7 +1,7 @@
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { FeaturedArticle } from "@/components/featured-article"
-import { RecentArticles } from "@/components/recent-articles"
+import { RecentArticlesClient } from "@/components/recent-articles-client"
 import { Newsletter } from "@/components/newsletter"
 import { PullToRefresh } from "@/components/pull-to-refresh"
 import { getAllCategories, getFeaturedArticle, getRecentArticles } from "@/lib/data"
@@ -43,7 +43,7 @@ async function HomePageContent() {
   const [categories, featuredArticle, recentArticles] = await Promise.all([
     getAllCategories(),
     getFeaturedArticle(),
-    getRecentArticles(6),
+    getRecentArticles(10),
   ])
 
   const navigationItems = categories.map((category) => category.name)
@@ -54,7 +54,6 @@ async function HomePageContent() {
 
       <PullToRefresh>
         <main className="container mx-auto px-4 py-8">
-          {/* SEO Hero Section */}
           <section className="mb-12 pb-8 border-b border-gray-200 dark:border-gray-800">
             <h1 className="text-4xl md:text-5xl font-bold font-serif text-black dark:text-white mb-4">
               Latest Global News from SylphCorps Media
@@ -67,7 +66,7 @@ async function HomePageContent() {
           </section>
 
           {featuredArticle && <FeaturedArticle article={featuredArticle} />}
-          <RecentArticles articles={recentArticles} />
+          <RecentArticlesClient initialArticles={recentArticles} />
           <Newsletter />
         </main>
       </PullToRefresh>

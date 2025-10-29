@@ -4,8 +4,8 @@ import {
   fetchCategoriesWithDetails,
   fetchCategories,
   fetchArticleBySlug,
-  fetchArticlesByCategory,
   searchArticles,
+  fetchArticlesByCategoryDirect,
   type ApiArticle,
   type ApiCategory,
 } from "./api"
@@ -187,7 +187,7 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
 // Get articles by category using proper category filtering
 export async function getArticlesByCategory(categorySlug: string, limit?: number): Promise<Article[]> {
   try {
-    const response = await fetchArticlesByCategory(categorySlug, 0, limit || 50)
+    const response = await fetchArticlesByCategoryDirect(categorySlug, 0, limit || 50)
     return response.content.map(transformApiArticle)
   } catch (error) {
     console.error("Error getting articles by category:", error)

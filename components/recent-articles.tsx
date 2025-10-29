@@ -23,7 +23,7 @@ interface RecentArticlesProps {
 export function RecentArticles({ articles }: RecentArticlesProps) {
   return (
     <section>
-      <h2 className="text-2xl font-bold font-serif text-black dark:text-white mb-8">Latest News</h2>
+      <h2 className="text-2xl font-bold font-serif text-black dark:text-white mb-8">More News</h2>
       <div className="grid md:grid-cols-2 gap-8">
         {articles.map((article, index) => (
           <Link key={index} href={`/article/${article.slug}`}>

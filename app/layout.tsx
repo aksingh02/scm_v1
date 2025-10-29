@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s | SylphCorps Media - News & Insights",
   },
   description:
-    "SylphCorps Media delivers the latest global news and insights on technology, business, politics, health, science and more. Your trusted source for comprehensive news coverage and analysis.",
+    "Global news platform delivering latest insights on technology, business, politics, health, and science from SylphCorps Media.",
   keywords: [
     "sylphcorps",
     "sylphcorp",

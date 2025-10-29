@@ -330,6 +330,35 @@ export async function fetchArticleBySlug(slug: string): Promise<ApiArticle | nul
   }
 }
 
+export async function fetchArticlesByCategoryDirect(categorySlug: string, page = 0, size = 20): Promise<ApiResponse> {
+  try {
+    const url = `${API_BASE_URL}/articles/category/${categorySlug}?page=${page}&size=${size}`
+    return await fetchWithTimeout(url)
+  } catch (error) {
+    console.error(`Error fetching articles for category ${categorySlug}:`, error)
+    return {
+      content: [],
+      pageable: {
+        sort: { empty: true, sorted: false, unsorted: true },
+        offset: 0,
+        pageSize: size,
+        pageNumber: page,
+        unpaged: false,
+        paged: true,
+      },
+      last: true,
+      totalElements: 0,
+      totalPages: 0,
+      number: page,
+      size,
+      sort: { empty: true, sorted: false, unsorted: true },
+      first: true,
+      numberOfElements: 0,
+      empty: true,
+    }
+  }
+}
+
 // ---- Utilities ----
 export function clearApiCache() {
   apiCache.clear()
