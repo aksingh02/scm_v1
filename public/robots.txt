@@ -1,0 +1,27 @@
+# SylphCorps Media - Robots.txt
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api
+Disallow: /account
+Disallow: /*.json$
+Disallow: /*?*sort=
+Disallow: /*?*filter=
+
+# Crawl delay
+Crawl-delay: 1
+
+# Sitemaps
+Sitemap: https://sylphcorpsmedia.com/sitemap.xml
+Sitemap: https://sylphcorpsmedia.com/sitemap-articles.xml
+Sitemap: https://sylphcorpsmedia.com/sitemap-categories.xml
+
+# Google-specific
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Bing-specific
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
