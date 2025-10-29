@@ -27,38 +27,51 @@ interface RecentArticlesClientProps {
 export function RecentArticlesClient({ initialArticles }: RecentArticlesClientProps) {
   const [articles, setArticles] = useState<Article[]>(initialArticles)
   const [isLoading, setIsLoading] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
-  const [page, setPage] = useState(1)
-  const observerTarget = useRef<HTMLDivElement>(null)
+
+  const pageRef = useRef(1)
+  const hasMoreRef = useRef(true)
+  const loadedSlugsRef = useRef(new Set(initialArticles.map((a) => a.slug)))
   const MAX_ARTICLES = 250
+  const observerTarget = useRef<HTMLDivElement>(null)
 
   const loadMoreArticles = useCallback(async () => {
-    if (isLoading || !hasMore || articles.length >= MAX_ARTICLES) return
+    if (isLoading || !hasMoreRef.current || articles.length >= MAX_ARTICLES) return
 
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/articles?page=${page}&size=10`)
+      const response = await fetch(`/api/articles?page=${pageRef.current}&size=10`)
       const data = await response.json()
 
       if (data.articles && data.articles.length > 0) {
-        const newArticles = data.articles.slice(0, MAX_ARTICLES - articles.length)
-        setArticles((prev) => [...prev, ...newArticles])
-        setPage((prev) => prev + 1)
-        setHasMore(data.totalPages > page && articles.length + newArticles.length < MAX_ARTICLES)
+        const newArticles = data.articles.filter((article: Article) => !loadedSlugsRef.current.has(article.slug))
+
+        if (newArticles.length > 0) {
+          const articlesToAdd = newArticles.slice(0, MAX_ARTICLES - articles.length)
+          articlesToAdd.forEach((article) => loadedSlugsRef.current.add(article.slug))
+
+          setArticles((prev) => [...prev, ...articlesToAdd])
+          pageRef.current += 1
+
+          if (articles.length + articlesToAdd.length >= MAX_ARTICLES) {
+            hasMoreRef.current = false
+          }
+        } else {
+          hasMoreRef.current = false
+        }
       } else {
-        setHasMore(false)
+        hasMoreRef.current = false
       }
     } catch (error) {
       console.error("Error loading more articles:", error)
     } finally {
       setIsLoading(false)
     }
-  }, [page, isLoading, hasMore, articles.length])
+  }, [articles.length, isLoading])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
+        if (entries[0].isIntersecting && hasMoreRef.current && !isLoading) {
           loadMoreArticles()
         }
       },
@@ -74,14 +87,14 @@ export function RecentArticlesClient({ initialArticles }: RecentArticlesClientPr
         observer.unobserve(observerTarget.current)
       }
     }
-  }, [loadMoreArticles, hasMore, isLoading])
+  }, [loadMoreArticles, isLoading])
 
   return (
     <section>
       <h2 className="text-2xl font-bold font-serif text-black dark:text-white mb-8">More News</h2>
       <div className="grid md:grid-cols-2 gap-8">
         {articles.map((article, index) => (
-          <Link key={`${article.slug}-${index}`} href={`/article/${article.slug}`}>
+          <Link key={article.slug} href={`/article/${article.slug}`}>
             <article className="group cursor-pointer">
               <div className="flex space-x-4">
                 <div className="flex-shrink-0">
@@ -130,9 +143,6 @@ export function RecentArticlesClient({ initialArticles }: RecentArticlesClientPr
               </div>
             ))}
           </div>
-        )}
-        {!hasMore && articles.length > 0 && (
-          <p className="text-center text-gray-500 dark:text-gray-400">No more articles to load</p>
         )}
       </div>
     </section>
