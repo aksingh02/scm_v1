@@ -9,6 +9,7 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { MobileNav } from "./mobile-nav"
 import { ThemeToggle } from "./theme-toggle"
+import { useTheme } from "next-themes"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +38,13 @@ interface SessionState {
 
 export function Header({ navigationItems = [] }: HeaderProps) {
   const [session, setSession] = useState<SessionState>({ loading: true, authenticated: false, user: null })
+  const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
+  const { theme } = useTheme()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -79,6 +86,11 @@ export function Header({ navigationItems = [] }: HeaderProps) {
     }
     return null
   }
+
+  const logoSrc =
+    mounted && theme === "dark"
+      ? "/images/logo/The-SylphCorps-Media-light.png"
+      : "/images/logo/The-SylphCorps-Media-dark.png"
 
   const activeCategorySlug = getActiveCategorySlug()
 
@@ -154,26 +166,15 @@ export function Header({ navigationItems = [] }: HeaderProps) {
             <MobileNav navigationItems={["Home", ...navigationItems]} />
 
             <Link href="/" className="flex items-center">
-              {/* <Image
-                src="/images/logo/scm.png"
-                alt="SylphCorps Media newsroom"
-                width={70}
-                height={70}
-                className="rounded-lg shadow-lg"
-                sizes="70px"
-                priority
-                loading="eager"
-              /> */}
               <div className="text-center">
                 <Image
-                  src="/images/logo/The-SylphCorps-Media-dark.png" alt="SylphCorps Media newsroom"
+                  src={logoSrc || "/placeholder.svg"}
+                  alt="SylphCorps Media newsroom"
                   width={400}
-                  height={60} 
-                  priority 
-                  loading="eager" />
-                {/* <span className="text-2xl md:text-3xl font-bold font-serif text-black dark:text-white block">
-                  SylphCorps Media
-                </span> */}
+                  height={60}
+                  priority
+                  loading="eager"
+                />
                 <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 italic mt-1">
                   Innovating Tomorrow&apos;s News Today
                 </p>
@@ -209,10 +210,11 @@ export function Header({ navigationItems = [] }: HeaderProps) {
           <div className="hidden md:flex items-center space-x-8 py-4 overflow-x-auto">
             <Link
               href="/"
-              className={`text-sm font-medium transition-colors whitespace-nowrap ${pathname === "/"
-                ? "text-black dark:text-white border-b-2 border-black dark:border-white"
-                : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
-                }`}
+              className={`text-sm font-medium transition-colors whitespace-nowrap ${
+                pathname === "/"
+                  ? "text-black dark:text-white border-b-2 border-black dark:border-white"
+                  : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
+              }`}
             >
               Home
             </Link>
@@ -223,10 +225,11 @@ export function Header({ navigationItems = [] }: HeaderProps) {
                 <Link
                   key={item}
                   href={`/${itemSlug}`}
-                  className={`text-sm font-medium transition-colors whitespace-nowrap ${isActive
-                    ? "text-black dark:text-white border-b-2 border-black dark:border-white"
-                    : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
-                    }`}
+                  className={`text-sm font-medium transition-colors whitespace-nowrap ${
+                    isActive
+                      ? "text-black dark:text-white border-b-2 border-black dark:border-white"
+                      : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
+                  }`}
                 >
                   {item}
                 </Link>

@@ -23,6 +23,7 @@ import Link from "next/link"
 import { ThemeToggle } from "./theme-toggle"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { useTheme } from "next-themes"
 
 interface MobileNavProps {
   navigationItems?: string[]
@@ -46,7 +47,13 @@ export function MobileNav({ navigationItems = [] }: MobileNavProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [newsletterEmail, setNewsletterEmail] = useState("")
   const [user, setUser] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
+  const { theme } = useTheme()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -54,7 +61,7 @@ export function MobileNav({ navigationItems = [] }: MobileNavProps) {
       .then((data) => {
         if (data?.user) setUser(data.user)
       })
-      .catch(() => { })
+      .catch(() => {})
   }, [])
 
   const handleSearch = (e: React.FormEvent) => {
@@ -77,6 +84,11 @@ export function MobileNav({ navigationItems = [] }: MobileNavProps) {
     }
   }
 
+  const logoSrc =
+    mounted && theme === "dark"
+      ? "/images/logo/The-SylphCorps-Media-light.png"
+      : "/images/logo/The-SylphCorps-Media-dark.png"
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
@@ -87,17 +99,17 @@ export function MobileNav({ navigationItems = [] }: MobileNavProps) {
       <SheetContent side="left" className="w-80 p-0 bg-white dark:bg-gray-900">
         <div className="flex flex-col h-full">
           <SheetHeader className="p-6 border-b border-gray-200 dark:border-gray-800">
+            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
             <div className="flex items-center justify-between">
               <div>
-                {/* <SheetTitle className="text-xl font-bold font-serif text-black dark:text-white">
-                  SylphCorps Media
-                </SheetTitle> */}
                 <Image
-                  src="/images/logo/The-SylphCorps-Media-dark.png" alt="SylphCorps Media newsroom"
+                  src={logoSrc || "/placeholder.svg"}
+                  alt="SylphCorps Media newsroom"
                   width={400}
                   height={60}
                   priority
-                  loading="eager" />
+                  loading="eager"
+                />
                 <p className="text-xs text-gray-600 dark:text-gray-400 italic mt-1">Innovating Tomorrow's News Today</p>
               </div>
               <ThemeToggle />

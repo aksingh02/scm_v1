@@ -63,8 +63,8 @@ export const metadata: Metadata = {
     images: ["https://scm-s3-image-bucket.s3.ap-south-1.amazonaws.com/scm-about/scm-values-tag-img.png"],
   },
   icons: {
-    icon: "images/logo/scm.png",
-    apple: "images/logo/scm.png",
+    icon: "/images/logo/SCM-favicon.png",
+    apple: "/images/logo/SCM-favicon.png",
   },
   robots: {
     index: true,
