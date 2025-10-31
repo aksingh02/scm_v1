@@ -154,7 +154,7 @@ export function Header({ navigationItems = [] }: HeaderProps) {
             <MobileNav navigationItems={["Home", ...navigationItems]} />
 
             <Link href="/" className="flex items-center">
-              <Image
+              {/* <Image
                 src="/images/logo/scm.png"
                 alt="SylphCorps Media newsroom"
                 width={70}
@@ -163,11 +163,17 @@ export function Header({ navigationItems = [] }: HeaderProps) {
                 sizes="70px"
                 priority
                 loading="eager"
-              />
-              <div className="ml-3 text-center">
-                <span className="text-2xl md:text-3xl font-bold font-serif text-black dark:text-white block">
+              /> */}
+              <div className="text-center">
+                <Image
+                  src="/images/logo/The-SylphCorps-Media-dark.png" alt="SylphCorps Media newsroom"
+                  width={400}
+                  height={60} 
+                  priority 
+                  loading="eager" />
+                {/* <span className="text-2xl md:text-3xl font-bold font-serif text-black dark:text-white block">
                   SylphCorps Media
-                </span>
+                </span> */}
                 <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 italic mt-1">
                   Innovating Tomorrow&apos;s News Today
                 </p>
@@ -203,11 +209,10 @@ export function Header({ navigationItems = [] }: HeaderProps) {
           <div className="hidden md:flex items-center space-x-8 py-4 overflow-x-auto">
             <Link
               href="/"
-              className={`text-sm font-medium transition-colors whitespace-nowrap ${
-                pathname === "/"
-                  ? "text-black dark:text-white border-b-2 border-black dark:border-white"
-                  : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
-              }`}
+              className={`text-sm font-medium transition-colors whitespace-nowrap ${pathname === "/"
+                ? "text-black dark:text-white border-b-2 border-black dark:border-white"
+                : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
+                }`}
             >
               Home
             </Link>
@@ -218,11 +223,10 @@ export function Header({ navigationItems = [] }: HeaderProps) {
                 <Link
                   key={item}
                   href={`/${itemSlug}`}
-                  className={`text-sm font-medium transition-colors whitespace-nowrap ${
-                    isActive
-                      ? "text-black dark:text-white border-b-2 border-black dark:border-white"
-                      : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
-                  }`}
+                  className={`text-sm font-medium transition-colors whitespace-nowrap ${isActive
+                    ? "text-black dark:text-white border-b-2 border-black dark:border-white"
+                    : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
+                    }`}
                 >
                   {item}
                 </Link>

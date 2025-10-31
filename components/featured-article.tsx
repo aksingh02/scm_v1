@@ -34,7 +34,7 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
             <span>•</span>
             <span>{article.readTime}</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold font-serif text-black dark:text-white leading-tight">
+          <h1 className="text-4xl md:text-4xl font-bold font-serif text-black dark:text-white leading-tight">
             {article.title}
           </h1>
           <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">{article.summary}</p>

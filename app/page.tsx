@@ -54,17 +54,6 @@ async function HomePageContent() {
 
       <PullToRefresh>
         <main className="container mx-auto px-4 py-8">
-          <section className="mb-12 pb-8 border-b border-gray-200 dark:border-gray-800">
-            <h2 className="text-4xl md:text-5xl font-bold font-serif text-black dark:text-white mb-4">
-              Latest Global News from SylphCorps Media
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-6 max-w-2xl">
-              Stay informed with breaking news, in-depth analysis, and exclusive insights from SylphCorps on technology,
-              business, politics, health, science, and world events. Your trusted source for comprehensive news
-              coverage.
-            </p>
-          </section>
-
           {featuredArticle && <FeaturedArticle article={featuredArticle} />}
           <RecentArticlesClient initialArticles={recentArticles} />
           <Newsletter />
@@ -94,7 +83,7 @@ async function HomePageContent() {
                 name: "SylphCorps Media",
                 logo: {
                   "@type": "ImageObject",
-                  url: "https://sylphcorpsmedia.com/images/logo/scm.png",
+                  url: "https://sylphcorpsmedia.com/images/logo/SCM-favicon.png",
                 },
               },
             }),

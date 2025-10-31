@@ -22,6 +22,7 @@ import {
 import Link from "next/link"
 import { ThemeToggle } from "./theme-toggle"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 
 interface MobileNavProps {
   navigationItems?: string[]
@@ -53,7 +54,7 @@ export function MobileNav({ navigationItems = [] }: MobileNavProps) {
       .then((data) => {
         if (data?.user) setUser(data.user)
       })
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   const handleSearch = (e: React.FormEvent) => {
@@ -88,9 +89,15 @@ export function MobileNav({ navigationItems = [] }: MobileNavProps) {
           <SheetHeader className="p-6 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center justify-between">
               <div>
-                <SheetTitle className="text-xl font-bold font-serif text-black dark:text-white">
+                {/* <SheetTitle className="text-xl font-bold font-serif text-black dark:text-white">
                   SylphCorps Media
-                </SheetTitle>
+                </SheetTitle> */}
+                <Image
+                  src="/images/logo/The-SylphCorps-Media-dark.png" alt="SylphCorps Media newsroom"
+                  width={400}
+                  height={60}
+                  priority
+                  loading="eager" />
                 <p className="text-xs text-gray-600 dark:text-gray-400 italic mt-1">Innovating Tomorrow's News Today</p>
               </div>
               <ThemeToggle />

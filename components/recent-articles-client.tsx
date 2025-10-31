@@ -48,7 +48,7 @@ export function RecentArticlesClient({ initialArticles }: RecentArticlesClientPr
 
         if (newArticles.length > 0) {
           const articlesToAdd = newArticles.slice(0, MAX_ARTICLES - articles.length)
-          articlesToAdd.forEach((article) => loadedSlugsRef.current.add(article.slug))
+          articlesToAdd.forEach((article: { slug: string }) => loadedSlugsRef.current.add(article.slug))
 
           setArticles((prev) => [...prev, ...articlesToAdd])
           pageRef.current += 1

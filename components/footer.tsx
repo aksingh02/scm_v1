@@ -1,6 +1,7 @@
 import { Separator } from "@/components/ui/separator"
 import { X, Instagram, Youtube } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 export function Footer() {
   return (
@@ -8,7 +9,13 @@ export function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-bold font-serif mb-2">SylphCorps Media</h3>
+            {/* <h3 className="text-xl font-bold font-serif mb-2">SylphCorps Media</h3> */}
+            <Image
+              src="/images/logo/The-SylphCorps-Media-light.png" alt="SylphCorps Media newsroom"
+              width={400}
+              height={60}
+              priority
+              loading="eager" />
             <p className="text-sm text-gray-400 italic mb-4">Innovating Tomorrow's News Today</p>
             <p className="text-gray-300 dark:text-gray-400 text-sm">
               Delivering tomorrow's news today through innovative journalism and cutting-edge technology. Your trusted
@@ -111,6 +118,17 @@ export function Footer() {
         </div>
 
         <Separator className="my-8 bg-gray-700 dark:bg-gray-800" />
+
+        <section className="mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold font-serif text-white dark:text-white mb-4">
+            Latest Global News from SylphCorps Media
+          </h2>
+          <p className="text-sm text-gray-300 dark:text-gray-400">
+            Stay informed with breaking news, in-depth analysis, and exclusive insights from SylphCorps on technology,
+            business, politics, health, science, and world events. Your trusted source for comprehensive news
+            coverage.
+          </p>
+        </section>
 
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-300 dark:text-gray-400">
           <p>&copy; {new Date().getFullYear()} SylphCorps Media. All rights reserved.</p>
