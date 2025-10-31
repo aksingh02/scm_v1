@@ -112,7 +112,6 @@ export function MobileNav({ navigationItems = [] }: MobileNavProps) {
                 />
                 <p className="text-xs text-gray-600 dark:text-gray-400 italic mt-1">Innovating Tomorrow's News Today</p>
               </div>
-              <ThemeToggle />
             </div>
           </SheetHeader>
 

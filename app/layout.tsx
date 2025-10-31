@@ -63,8 +63,8 @@ export const metadata: Metadata = {
     images: ["https://scm-s3-image-bucket.s3.ap-south-1.amazonaws.com/scm-about/scm-values-tag-img.png"],
   },
   icons: {
-    icon: "/images/logo/SCM-favicon.png",
-    apple: "/images/logo/SCM-favicon.png",
+    icon: "/images/logo/fav.png",
+    apple: "/images/logo/fav.png",
   },
   robots: {
     index: true,
@@ -110,7 +110,7 @@ export default function RootLayout({
               url: "https://sylphcorpsmedia.com",
               logo: {
                 "@type": "ImageObject",
-                url: "https://sylphcorpsmedia.com/images/logo/SCM-favicon.png",
+                url: "https://sylphcorpsmedia.com/images/logo/fav.png",
                 width: 70,
                 height: 70,
               },

@@ -83,7 +83,7 @@ async function HomePageContent() {
                 name: "SylphCorps Media",
                 logo: {
                   "@type": "ImageObject",
-                  url: "https://sylphcorpsmedia.com/images/logo/SCM-favicon.png",
+                  url: "https://sylphcorpsmedia.com/images/logo/fav.png",
                 },
               },
             }),
